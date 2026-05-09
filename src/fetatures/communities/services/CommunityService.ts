@@ -1,0 +1,167 @@
+import { User } from 'better-auth';
+import { CommunityInput } from '../schemas/communitySchema';
+import {
+  communityRepository,
+  ICommunityRepository,
+} from './CommunityRepository';
+import { CommunityPolicy } from '../policies/CommunityPolicy';
+import { MembershipPolicy } from '../policies/MembershipPolicy';
+import { notFound } from 'next/navigation';
+import { checkPassword } from '@/src/shared/utils/auth';
+import { deleteUTFiles } from '@/src/lib/uploadthing-server';
+import {
+  IMembershipRepository,
+  membershipRepository,
+} from './MembershipRepository';
+import {
+  IMeetiRepository,
+  meetiRepository,
+} from '../../meetis/services/MeetiRepository';
+import {
+  IProfileRepository,
+  profileRepository,
+} from '../../profile/services/ProfileRepository';
+
+class CommunityService {
+  constructor(
+    private communityRepository: ICommunityRepository,
+    private membershipRepository: IMembershipRepository,
+    private meetiRepository: IMeetiRepository,
+    private profileRepository: IProfileRepository
+  ) {}
+
+  async createCommunity(data: CommunityInput, userId: string) {
+    const community = await this.communityRepository.create({
+      ...data,
+      createdBy: userId,
+    });
+    return community;
+  }
+
+  async getUserCommunitiesForAPI(userId: string) {
+    const communities = await this.communityRepository.findByUser(userId);
+    return communities.map((community) => ({
+      id: community.id,
+      name: community.name,
+    }));
+  }
+
+  async getUserCommunities(user: User) {
+    const communities = await this.communityRepository.findByUser(user.id);
+    // console.log(communities);
+    const enriched = await Promise.all(
+      communities.map(async (community) => {
+        const isMember = true;
+        const isAdmin = CommunityPolicy.isAdmin(user, community);
+        const memberCount = await this.membershipRepository.getMemberCount(
+          community.id
+        );
+
+        return {
+          data: community,
+          memberCount,
+          context: {
+            isMember,
+            isAdmin,
+          },
+          permissions: {
+            canEdit: CommunityPolicy.canEdit(user, community),
+            canDelete: CommunityPolicy.canDelete(user, community),
+            canJoin: MembershipPolicy.canJoin(user, community, isMember),
+            canLeave: MembershipPolicy.canLeave(user, community, isMember),
+            canViewMembers: CommunityPolicy.canViewMembers(user, community),
+          },
+        };
+      })
+    );
+    // console.log(enriched);
+    return enriched;
+  }
+
+  async getCommunity(communityId: string) {
+    const community = await this.communityRepository.findById(communityId);
+    if (!community) notFound();
+    return community;
+  }
+
+  async getCommunityDetails(communityId: string, user?: User) {
+    const community = await this.getCommunity(communityId);
+    const memberCount = await this.membershipRepository.getMemberCount(
+      community.id
+    );
+    const admin = await this.profileRepository.findById(community.createdBy);
+
+    if (!user) {
+      return {
+        data: { ...community, admin },
+        memberCount,
+        context: null,
+        permissions: null,
+      };
+    }
+
+    const isMember = await this.membershipRepository.isMember(
+      communityId,
+      user.id
+    );
+    const isAdmin = CommunityPolicy.isAdmin(user, community);
+    return {
+      data: { ...community, admin },
+      memberCount,
+      context: {
+        isMember,
+        isAdmin,
+      },
+      permissions: {
+        canEdit: CommunityPolicy.canEdit(user, community),
+        canDelete: CommunityPolicy.canDelete(user, community),
+        canJoin: MembershipPolicy.canJoin(user, community, isMember),
+        canLeave: MembershipPolicy.canLeave(user, community, isMember),
+        canViewMembers: CommunityPolicy.canViewMembers(user, community),
+      },
+    };
+  }
+  async updateCommunity(data: CommunityInput, communityId: string, user: User) {
+    const community = await this.getCommunity(communityId);
+    if (!CommunityPolicy.canEdit(user, community)) {
+      throw new Error('No tienes permisos para actualizar esta Comunidad');
+    }
+    await this.communityRepository.update(data, community.id);
+  }
+
+  async deleteCommunity(communityId: string, password: string, user: User) {
+    const community = await this.getCommunity(communityId);
+    if (!CommunityPolicy.canDelete(user, community)) {
+      throw new Error('No tienes permisos para eliminar esta Comunidad');
+    }
+    const isValidPassword = await checkPassword(password);
+    if (!isValidPassword) {
+      return {
+        error: 'Password incorrecto',
+        success: '',
+      };
+    }
+    // Eliminar la Comunidad
+    await this.communityRepository.delete(communityId);
+    await deleteUTFiles(community.image);
+    return {
+      error: '',
+      success: 'Comunidad eliminada correctamente',
+    };
+  }
+
+  async getUpcomingMeetisByCommunity(communityId: string) {
+    return await this.meetiRepository.findUpcomingByCommunity(communityId);
+  }
+
+  async getFeaturedCommunities() {
+    return await this.communityRepository.findFeatured();
+  }
+}
+
+export const communityService = new CommunityService(
+  communityRepository,
+  membershipRepository,
+  meetiRepository,
+  profileRepository
+);
