@@ -19,10 +19,11 @@ import { useSession } from '@/lib/auth-client';
 export default function DashboardPanel() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: session, isPending } = useSession();
-  if (isPending) return <p>Cargando...</p>;
+  if (isPending) return null;
 
   return (
     <>
+      {/* Sidebar móvil (drawer) */}
       <Dialog
         open={sidebarOpen}
         onClose={setSidebarOpen}
@@ -30,9 +31,8 @@ export default function DashboardPanel() {
       >
         <DialogBackdrop
           transition
-          className="fixed inset-0 bg-gray-900/80 transition-opacity duration-300 ease-linear data-closed:opacity-0"
+          className="fixed inset-0 bg-gray-900/70 transition-opacity duration-300 ease-linear data-closed:opacity-0"
         />
-
         <div className="fixed inset-0 flex">
           <DialogPanel
             transition
@@ -45,7 +45,7 @@ export default function DashboardPanel() {
                   onClick={() => setSidebarOpen(false)}
                   className="-m-2.5 p-2.5"
                 >
-                  <span className="sr-only">Close sidebar</span>
+                  <span className="sr-only">Cerrar menú</span>
                   <XMarkIcon aria-hidden="true" className="size-6 text-white" />
                 </button>
               </div>
@@ -55,39 +55,55 @@ export default function DashboardPanel() {
         </div>
       </Dialog>
 
-      {/* Static sidebar for desktop */}
-      <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col dark:bg-gray-900">
-        <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 dark:border-white/10 dark:bg-black/10">
-          <div className="flex justify-center pt-5 w-full">
-            <div className="w-32">
-              <Link href={'/'} className="flex items-center justify-center">
-                <Logo />
-              </Link>
-            </div>
+      {/* Sidebar fijo escritorio */}
+      <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
+        <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-gray-200 bg-white px-6 dark:border-white/10 dark:bg-gray-950">
+          {/* Logo */}
+          <div className="flex h-16 shrink-0 items-center border-b border-gray-100 dark:border-white/10">
+            <Link href="/" className="flex items-center">
+              <Logo />
+            </Link>
           </div>
           <DashboardNavigation />
         </div>
       </div>
 
-      {/* Top Bar */}
-      <div className="flex justify-between w-full p-5">
+      {/* Topbar */}
+      <div className="sticky top-0 z-40 flex h-14 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm dark:border-white/10 dark:bg-gray-950 lg:pl-80 lg:pr-6">
+        {/* Botón menú móvil */}
         <button
           type="button"
           onClick={() => setSidebarOpen(true)}
-          className="-m-2.5 p-2.5 text-gray-700 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+          className="-m-2.5 p-2.5 text-gray-700 dark:text-gray-400 lg:hidden"
         >
-          <span className="sr-only">Open sidebar</span>
-          <Bars3Icon aria-hidden="true" className="size-6" />
+          <span className="sr-only">Abrir menú</span>
+          <Bars3Icon aria-hidden="true" className="size-5" />
         </button>
 
-        <div className="flex-1 text-lg font-semibold text-gray-900 dark:text-white lg:hidden ml-5">
-          Menú de Navegación
-        </div>
-        <p className="font-bold">{session?.user?.email}</p>
-        <div className="inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
+        {/* Separador vertical móvil */}
+        <div
+          aria-hidden="true"
+          className="h-6 w-px bg-gray-200 dark:bg-gray-700 lg:hidden"
+        />
+
+        {/* Título móvil */}
+        <span className="flex-1 text-sm font-semibold text-gray-900 dark:text-white lg:hidden">
+          AlsolNPL
+        </span>
+
+        {/* Zona derecha */}
+        <div className="ml-auto flex items-center gap-x-4">
+          {/* Email usuario (solo escritorio) */}
+          <span className="hidden text-sm text-gray-500 dark:text-gray-400 lg:block">
+            {session?.user?.email}
+          </span>
+
+          {/* Notificaciones */}
           {session?.user?.id && (
             <NotificationsPanel userId={session.user.id} />
           )}
+
+          {/* Menú usuario */}
           {session && <UserMenu userId={session.user?.id} />}
         </div>
       </div>
