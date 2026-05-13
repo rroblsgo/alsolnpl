@@ -5,7 +5,6 @@ import {
   meetiAttendees,
 } from '@/src/db/schema';
 import { SelectCommunity } from '../../communities/types/community.types';
-import { User } from 'better-auth';
 
 export type SelectCategory = typeof category.$inferSelect;
 
@@ -23,11 +22,29 @@ export type SelectMeeti = SelectBasicMeeti & {
   location?: SelectMeetiLocation | null;
 };
 
+/**
+ * Tipo del admin tal como lo devuelve Drizzle en el join.
+ * Drizzle infiere los campos de la tabla users pero NO incluye
+ * additionalFields de better-auth (role, bio) a menos que estén
+ * explícitamente en el schema Drizzle.
+ * Usamos Pick con los campos reales del schema para ser precisos.
+ */
+export type MeetiAdmin = {
+  id: string;
+  name: string;
+  email: string;
+  image?: string | null;
+  bio?: string | null;
+  emailVerified: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 export type FullMeeti = SelectBasicMeeti & {
   location?: SelectMeetiLocation | null;
   category: SelectCategory;
   community: SelectCommunity;
-  admin: User;
+  admin: MeetiAdmin;
 };
 
 export type MeetiPermissions = {
@@ -38,8 +55,8 @@ export type MeetiPermissions = {
 export type SelectMeetiAttendee = typeof meetiAttendees.$inferSelect;
 export type SelectMeetiAttendeeWithUser = SelectMeetiAttendee & {
   user: {
-    id: User['id'];
-    name: User['name'];
-    email: User['email'];
+    id: string;
+    name: string;
+    email: string;
   };
 };

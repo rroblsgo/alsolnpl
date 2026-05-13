@@ -1,11 +1,15 @@
 import Link from 'next/link';
 import Logo from './Logo';
 import GuestNavigation from './GuestNavigation';
-import { requireAuth } from '@/src/lib/auth-server';
+import { getServerSession } from '@/src/lib/auth-server';
+import { canAccessNpl } from '@/src/lib/roles';
 import UserNavigation from './UserNavigation';
 
 export default async function Header() {
-  const { isAuth } = await requireAuth();
+  const session = await getServerSession();
+  const isAuth = !!session;
+  const role = session?.user?.role ?? null;
+  const nplAccess = canAccessNpl(role);
 
   return (
     <header className="sticky top-0 z-40 border-b border-gray-200 bg-white/95 backdrop-blur dark:border-white/10 dark:bg-gray-950/95">
@@ -27,15 +31,18 @@ export default async function Header() {
           >
             Plataforma
           </Link>
-          <Link
-            href="/npl"
-            className="hover:text-gray-900 dark:hover:text-white transition-colors"
-          >
-            Activos
-          </Link>
+          {nplAccess && (
+            <Link
+              href="/npl"
+              className="hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              Activos
+            </Link>
+          )}
         </nav>
 
-        {isAuth ? <UserNavigation /> : <GuestNavigation />}
+        {/* Pasamos el role para que UserNavigation decida qué mostrar */}
+        {isAuth ? <UserNavigation role={role} /> : <GuestNavigation />}
       </div>
     </header>
   );

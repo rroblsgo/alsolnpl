@@ -30,7 +30,13 @@ export const auth = betterAuth({
     additionalFields: {
       bio: {
         type: 'string',
-        required: false,
+        required: false,   // opcional → string | null | undefined en el tipo inferido
+      },
+      role: {
+        type: 'string',
+        required: false,   // opcional → compatible con registros Drizzle sin este campo
+        defaultValue: 'user',
+        input: false,      // el usuario no puede enviarlo al registrarse
       },
     },
   },

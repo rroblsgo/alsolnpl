@@ -1,11 +1,17 @@
 import Heading from '@/src/shared/components/typography/Heading';
-
 import Image from 'next/image';
-import { User } from '../../auth/types/auth.types';
 import Link from 'next/link';
 
+// Props explícitas con solo los campos que este componente usa.
+// Desacoplado del tipo User de better-auth para ser compatible con
+// objetos Drizzle (joins) que no incluyen additionalFields como role o bio.
 type Props = {
-  organizer: User;
+  organizer: {
+    id: string;
+    name: string;
+    image?: string | null;
+    bio?: string | null;
+  };
 };
 
 export default function OrganizerCard({ organizer }: Props) {
@@ -28,7 +34,7 @@ export default function OrganizerCard({ organizer }: Props) {
         </div>
         <div className="col-span-3 space-y-3">
           <p className="text-lg font-black">{name}</p>
-          <p className="text-gray-500 text-sm">{bio} </p>
+          <p className="text-gray-500 text-sm">{bio}</p>
           {/* TODO */}
           <Link
             href={`/profiles/${id}`}
