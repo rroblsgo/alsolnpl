@@ -3,14 +3,12 @@
  *
  * IMPORTANTE: Antes de ejecutar, reemplaza:
  *   - REPLACE_WITH_YOUR_USER_ID  → id real de tu usuario (tabla users)
- *   - REPLACE_WITH_COMMUNITY_ID  → uuid real de una comunidad existente
  *   - Los nplId (1..10) asumen que tienes NPLs con esos ids; ajusta si es necesario
  */
 
 import { InsertTask } from '@/src/fetatures/tasks/types/task.types';
 
 const USER_ID = 'x2A0pmHwu86nqp6g2Xm5q6REsvvKNvNS';
-const COMMUNITY_ID = 'c259155e-e2da-4547-bf80-5b2994a3e6d7';
 
 const now = new Date();
 const days = (n: number) => new Date(now.getTime() - n * 86_400_000);
@@ -24,7 +22,6 @@ export const tasksData: InsertTask[] = [
     notas:
       '<p>Solicitar nota simple actualizada. Comprobar si existe hipoteca vigente de primer rango.</p>',
     expediente: 'NPL-2026-001',
-    communityId: COMMUNITY_ID,
     status: 'PENDIENTE',
     priority: 'ALTA',
     category: 'DUE_DILIGENCE',
@@ -40,7 +37,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Encargo de tasación a perito homologado para operación de compra de crédito.',
     expediente: 'NPL-2026-001',
-    communityId: COMMUNITY_ID,
     status: 'EN_CURSO',
     priority: 'ALTA',
     category: 'VALORACION',
@@ -56,7 +52,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Determinar si el inmueble está ocupado, por quién y en qué condiciones.',
     expediente: 'NPL-2026-002',
-    communityId: COMMUNITY_ID,
     status: 'PENDIENTE',
     priority: 'MEDIA',
     category: 'DUE_DILIGENCE',
@@ -72,7 +67,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Comprobar superficie catastral, linderos y titularidad en Sede Electrónica del Catastro.',
     expediente: 'NPL-2026-003',
-    communityId: COMMUNITY_ID,
     status: 'COMPLETADA',
     priority: 'BAJA',
     category: 'CATASTRO',
@@ -91,7 +85,6 @@ export const tasksData: InsertTask[] = [
     notas:
       '<p>Verificar si existe contrato de arrendamiento vigente y cláusula de resolución anticipada.</p>',
     expediente: 'NPL-2026-004',
-    communityId: COMMUNITY_ID,
     status: 'EN_CURSO',
     priority: 'ALTA',
     category: 'DUE_DILIGENCE',
@@ -109,7 +102,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Redacción y envío de carta notarial al deudor principal comunicando la cesión del crédito.',
     expediente: 'NPL-2026-001',
-    communityId: COMMUNITY_ID,
     status: 'COMPLETADA',
     priority: 'ALTA',
     category: 'LEGAL',
@@ -127,7 +119,6 @@ export const tasksData: InsertTask[] = [
       'Análisis del auto por el que el juzgado adjudica el inmueble al ejecutante.',
     notas: '<p>Comprobar firmeza del auto y posibles recursos pendientes.</p>',
     expediente: 'NPL-2026-005',
-    communityId: COMMUNITY_ID,
     status: 'PENDIENTE',
     priority: 'ALTA',
     category: 'LEGAL',
@@ -143,7 +134,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Iniciar expediente notarial para cancelar hipotecas y embargos de rango inferior.',
     expediente: 'NPL-2026-002',
-    communityId: COMMUNITY_ID,
     status: 'PENDIENTE',
     priority: 'MEDIA',
     category: 'LEGAL',
@@ -159,7 +149,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Coordinación con notaría para la firma de la escritura de transmisión del inmueble.',
     expediente: 'NPL-2026-006',
-    communityId: COMMUNITY_ID,
     status: 'BLOQUEADA',
     priority: 'ALTA',
     category: 'LEGAL',
@@ -175,7 +164,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Estudio del recurso presentado por tercero alegando titularidad sobre el bien ejecutado.',
     expediente: 'NPL-2026-007',
-    communityId: COMMUNITY_ID,
     status: 'EN_CURSO',
     priority: 'ALTA',
     category: 'LEGAL',
@@ -195,7 +183,6 @@ export const tasksData: InsertTask[] = [
     notas:
       '<p>El deudor muestra disposición. Proponer quita del 30% a cambio de entrega voluntaria del inmueble en 60 días.</p>',
     expediente: 'NPL-2026-003',
-    communityId: COMMUNITY_ID,
     status: 'COMPLETADA',
     priority: 'ALTA',
     category: 'NEGOCIACION',
@@ -212,7 +199,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Elaboración de propuesta formal de dación en pago para presentar al deudor y su asesor.',
     expediente: 'NPL-2026-008',
-    communityId: COMMUNITY_ID,
     status: 'EN_CURSO',
     priority: 'ALTA',
     category: 'NEGOCIACION',
@@ -230,7 +216,6 @@ export const tasksData: InsertTask[] = [
     notas:
       '<p>El fondo ofrece 65% del valor nominal. Contraoferta mínima aceptable: 72%.</p>',
     expediente: 'CARTERA-2026-A',
-    communityId: COMMUNITY_ID,
     status: 'EN_CURSO',
     priority: 'ALTA',
     category: 'NEGOCIACION',
@@ -244,7 +229,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Verificar que el deudor está cumpliendo el calendario de pagos acordado.',
     expediente: 'NPL-2026-004',
-    communityId: COMMUNITY_ID,
     status: 'PENDIENTE',
     priority: 'MEDIA',
     category: 'NEGOCIACION',
@@ -264,7 +248,6 @@ export const tasksData: InsertTask[] = [
     notas:
       '<p>Valor de tasación: 185.000 €. Tipo de subasta: 50%. Depósito previo requerido: 20%.</p>',
     expediente: 'NPL-2026-005',
-    communityId: COMMUNITY_ID,
     status: 'PENDIENTE',
     priority: 'ALTA',
     category: 'SUBASTA',
@@ -280,7 +263,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Solicitar al banco acreedor certificado actualizado de deuda para presentar en subasta.',
     expediente: 'NPL-2026-009',
-    communityId: COMMUNITY_ID,
     status: 'COMPLETADA',
     priority: 'MEDIA',
     category: 'SUBASTA',
@@ -297,7 +279,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Evaluar si el bien quedó desierto y valorar cesión de remate o nueva subasta.',
     expediente: 'NPL-2026-006',
-    communityId: COMMUNITY_ID,
     status: 'PENDIENTE',
     priority: 'MEDIA',
     category: 'SUBASTA',
@@ -315,7 +296,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Contratar técnico para obtener CEE previo a la comercialización del inmueble.',
     expediente: 'NPL-2026-010',
-    communityId: COMMUNITY_ID,
     status: 'PENDIENTE',
     priority: 'BAJA',
     category: 'ADMINISTRATIVO',
@@ -330,7 +310,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Presentar autoliquidación del Impuesto de Transmisiones Patrimoniales ante la CCAA.',
     expediente: 'NPL-2026-007',
-    communityId: COMMUNITY_ID,
     status: 'EN_CURSO',
     priority: 'MEDIA',
     category: 'ADMINISTRATIVO',
@@ -346,7 +325,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Gestión con el Registro de la Propiedad para inscribir la adquisición tras subasta.',
     expediente: 'NPL-2026-008',
-    communityId: COMMUNITY_ID,
     status: 'PENDIENTE',
     priority: 'ALTA',
     category: 'ADMINISTRATIVO',
@@ -362,7 +340,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Tramitar cédula de habitabilidad de primera ocupación ante el ayuntamiento.',
     expediente: 'NPL-2026-002',
-    communityId: COMMUNITY_ID,
     status: 'CANCELADA',
     priority: 'BAJA',
     category: 'ADMINISTRATIVO',
@@ -376,7 +353,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Comunicar cambio de titular en contratos de agua, luz y gas del inmueble adquirido.',
     expediente: 'NPL-2026-003',
-    communityId: COMMUNITY_ID,
     status: 'PENDIENTE',
     priority: 'BAJA',
     category: 'ADMINISTRATIVO',
@@ -394,7 +370,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Análisis de precios de venta de naves similares en polígono industrial de Málaga.',
     expediente: 'NPL-2026-009',
-    communityId: COMMUNITY_ID,
     status: 'EN_CURSO',
     priority: 'MEDIA',
     category: 'VALORACION',
@@ -410,7 +385,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Revisar tasación tras haberse acreditado la realización de mejoras en el inmueble.',
     expediente: 'NPL-2026-010',
-    communityId: COMMUNITY_ID,
     status: 'PENDIENTE',
     priority: 'MEDIA',
     category: 'VALORACION',
@@ -426,7 +400,6 @@ export const tasksData: InsertTask[] = [
     notas:
       '<p>Escenarios: venta rápida a 24 meses vs. arrendamiento + venta a 60 meses.</p>',
     expediente: 'NPL-2026-004',
-    communityId: COMMUNITY_ID,
     status: 'EN_CURSO',
     priority: 'ALTA',
     category: 'VALORACION',
@@ -444,7 +417,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Revisar y mejorar las plantillas Word usadas para los informes de análisis de cartera.',
     expediente: 'INTERNO-2026-01',
-    communityId: COMMUNITY_ID,
     status: 'PENDIENTE',
     priority: 'BAJA',
     category: 'ADMINISTRATIVO',
@@ -457,7 +429,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Organizar sesión de formación sobre cambios fiscales aplicables a las transmisiones de NPLs.',
     expediente: 'INTERNO-2026-02',
-    communityId: COMMUNITY_ID,
     status: 'PENDIENTE',
     priority: 'BAJA',
     category: 'OTRO',
@@ -470,7 +441,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Verificar que los nuevos clientes inversores han completado correctamente el proceso KYC.',
     expediente: 'COMPLIANCE-2026-01',
-    communityId: COMMUNITY_ID,
     status: 'EN_CURSO',
     priority: 'MEDIA',
     category: 'LEGAL',
@@ -486,7 +456,6 @@ export const tasksData: InsertTask[] = [
     notas:
       '<p>Incluir: número de activos, valor nominal, estado procesal y estimación de recuperación.</p>',
     expediente: 'GESTION-2026-Q1',
-    communityId: COMMUNITY_ID,
     status: 'EN_CURSO',
     priority: 'ALTA',
     category: 'OTRO',
@@ -499,7 +468,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Contactar soporte de la plataforma Subastas.BOE.es por error en depósito de puja.',
     expediente: 'INC-2026-005',
-    communityId: COMMUNITY_ID,
     status: 'BLOQUEADA',
     priority: 'ALTA',
     category: 'ADMINISTRATIVO',
@@ -512,7 +480,6 @@ export const tasksData: InsertTask[] = [
     description:
       'Completar el dossier del expediente finalizado y archivar en el sistema documental.',
     expediente: 'NPL-2025-088',
-    communityId: COMMUNITY_ID,
     status: 'COMPLETADA',
     priority: 'BAJA',
     category: 'ADMINISTRATIVO',

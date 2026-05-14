@@ -48,7 +48,7 @@ export const STATIC_IMAGES = [
   },
   // Añade más imágenes aquí:
   // { src: '/images/esquema-subasta.png', label: 'Esquema subasta', width: 600 },
-] as const;
+];
 
 // ─── Subcomponentes ───────────────────────────────────────────────────────────
 
