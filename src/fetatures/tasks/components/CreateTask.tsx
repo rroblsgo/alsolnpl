@@ -7,12 +7,23 @@ import { Form, FormSubmit } from '@/src/shared/components/forms';
 import TaskForm from './TaskForm';
 import { createTaskAction } from '../actions/task-actions';
 import toast from 'react-hot-toast';
-import { redirect } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { TaskFormOptions } from '../types/task.types';
 
 type Props = { options: TaskFormOptions };
 
+function defaultDates() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  return { today, tomorrow };
+}
+
 export default function CreateTask({ options }: Props) {
+  const router = useRouter();
+  const { today, tomorrow } = defaultDates();
+
   const methods = useForm<TaskInput>({
     resolver: zodResolver(TaskSchema),
     mode: 'all',
@@ -21,14 +32,14 @@ export default function CreateTask({ options }: Props) {
       description: '',
       notas: '',
       expediente: '',
-      communityId: '',
+      clienteId: null,
       status: 'PENDIENTE',
       priority: 'MEDIA',
       category: 'OTRO',
       assigneeId: '',
       nplId: null,
-      fechaPropuesta: null,
-      fechaLimite: null,
+      fechaPropuesta: today,
+      fechaLimite: tomorrow,
     },
   });
 
@@ -37,7 +48,8 @@ export default function CreateTask({ options }: Props) {
     if (error) toast.error(error);
     if (success) {
       toast.success(success);
-      redirect('/dashboard/tasks');
+      router.push('/dashboard/tasks');
+      router.refresh();
     }
   };
 

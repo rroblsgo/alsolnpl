@@ -5,11 +5,10 @@ import {
   varchar,
   text,
   timestamp,
-  uuid,
   integer,
 } from 'drizzle-orm/pg-core';
-import { community } from './community';
 import { npl } from './npl';
+import { clientes } from './clientes';
 import { users } from './auth-schema';
 
 export const taskStatusEnum = pgEnum('task_status', [
@@ -42,11 +41,11 @@ export const task = pgTable('tasks', {
   title: varchar('title', { length: 200 }).notNull(),
   description: varchar('description', { length: 500 }).notNull(),
   notas: text('notas'),
+  // Relación con NPL (opcional)
   nplId: integer('npl_id').references(() => npl.id, { onDelete: 'set null' }),
+  // Relación con Cliente (opcional) — sustituye a communityId
+  clienteId: integer('cliente_id').references(() => clientes.id, { onDelete: 'set null' }),
   expediente: varchar('expediente', { length: 100 }).notNull(),
-  communityId: uuid('community_id')
-    .notNull()
-    .references(() => community.id, { onDelete: 'cascade' }),
   status: taskStatusEnum('status').notNull().default('PENDIENTE'),
   priority: taskPriorityEnum('priority').notNull().default('MEDIA'),
   category: taskCategoryEnum('category').notNull().default('OTRO'),

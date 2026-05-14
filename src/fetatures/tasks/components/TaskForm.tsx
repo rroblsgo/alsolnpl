@@ -16,11 +16,19 @@ import {
 
 type Props = { options: TaskFormOptions };
 
+/**
+ * Convierte un Date al formato YYYY-MM-DD respetando la zona horaria local.
+ * NO usa toISOString() porque devuelve UTC y en España (UTC+1/+2) las 00:00
+ * locales se convierten al día anterior.
+ */
 function toDateInputValue(val: Date | string | null | undefined): string {
   if (!val) return '';
   const d = typeof val === 'string' ? new Date(val) : val;
   if (isNaN(d.getTime())) return '';
-  return d.toISOString().substring(0, 10);
+  const year  = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day   = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 export default function TaskForm({ options }: Props) {
@@ -48,7 +56,7 @@ export default function TaskForm({ options }: Props) {
           rows={3}
           maxLength={500}
           placeholder="Breve descripción de la tarea…"
-          className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
+          className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
           {...register('description')}
         />
         {errors.description && <FormError>{errors.description.message}</FormError>}
@@ -61,38 +69,44 @@ export default function TaskForm({ options }: Props) {
         {errors.expediente && <FormError>{errors.expediente.message}</FormError>}
       </div>
 
-      {/* NPL vinculado */}
-      <div>
-        <FormLabel htmlFor="nplId">NPL vinculado (opcional)</FormLabel>
-        <select
-          id="nplId"
-          className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-          {...register('nplId', { setValueAs: (v) => (v === '' || v === null) ? null : Number(v) })}
-        >
-          <option value="">— Sin NPL asociado —</option>
-          {options.npls.map((n) => (
-            <option key={n.id} value={n.id}>{n.tituloOperacion}</option>
-          ))}
-        </select>
+      <div className="grid gap-6 md:grid-cols-2">
+        {/* NPL vinculado */}
+        <div>
+          <FormLabel htmlFor="nplId">NPL vinculado (opcional)</FormLabel>
+          <select
+            id="nplId"
+            className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            {...register('nplId', {
+              setValueAs: (v) => (v === '' || v === null) ? null : Number(v),
+            })}
+          >
+            <option value="">— Sin NPL asociado —</option>
+            {options.npls.map((n) => (
+              <option key={n.id} value={n.id}>{n.tituloOperacion}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Cliente vinculado */}
+        <div>
+          <FormLabel htmlFor="clienteId">Cliente vinculado (opcional)</FormLabel>
+          <select
+            id="clienteId"
+            className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+            {...register('clienteId', {
+              setValueAs: (v) => (v === '' || v === null) ? null : Number(v),
+            })}
+          >
+            <option value="">— Sin cliente asociado —</option>
+            {options.clientes.map((c) => (
+              <option key={c.id} value={c.id}>{c.nombre}</option>
+            ))}
+          </select>
+          {errors.clienteId && <FormError>{errors.clienteId.message}</FormError>}
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Comunidad */}
-        <div>
-          <FormLabel htmlFor="communityId">Comunidad *</FormLabel>
-          <select
-            id="communityId"
-            className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-            {...register('communityId')}
-          >
-            <option value="">Selecciona una comunidad</option>
-            {options.communities.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-          {errors.communityId && <FormError>{errors.communityId.message}</FormError>}
-        </div>
-
         {/* Asignado a */}
         <div>
           <FormLabel htmlFor="assigneeId">Asignar a *</FormLabel>
@@ -108,9 +122,19 @@ export default function TaskForm({ options }: Props) {
           </select>
           {errors.assigneeId && <FormError>{errors.assigneeId.message}</FormError>}
         </div>
+
+        {/* Categoría */}
+        <div>
+          <FormLabel htmlFor="category">Categoría</FormLabel>
+          <select id="category" className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" {...register('category')}>
+            {TASK_CATEGORIES.map((c) => (
+              <option key={c} value={c}>{TASK_CATEGORY_LABELS[c]}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2">
         {/* Estado */}
         <div>
           <FormLabel htmlFor="status">Estado</FormLabel>
@@ -130,16 +154,6 @@ export default function TaskForm({ options }: Props) {
             ))}
           </select>
         </div>
-
-        {/* Categoría */}
-        <div>
-          <FormLabel htmlFor="category">Categoría</FormLabel>
-          <select id="category" className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm" {...register('category')}>
-            {TASK_CATEGORIES.map((c) => (
-              <option key={c} value={c}>{TASK_CATEGORY_LABELS[c]}</option>
-            ))}
-          </select>
-        </div>
       </div>
 
       {/* Fechas */}
@@ -155,7 +169,7 @@ export default function TaskForm({ options }: Props) {
                 type="date"
                 value={toDateInputValue(field.value as Date | string | null)}
                 onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)}
-                className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
+                className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             )}
           />
@@ -173,7 +187,7 @@ export default function TaskForm({ options }: Props) {
                 type="date"
                 value={toDateInputValue(field.value as Date | string | null)}
                 onChange={(e) => field.onChange(e.target.value ? new Date(e.target.value) : null)}
-                className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-1 focus:ring-orange-400"
+                className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
             )}
           />

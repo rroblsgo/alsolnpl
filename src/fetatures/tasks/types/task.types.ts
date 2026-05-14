@@ -38,14 +38,14 @@ export const TASK_CATEGORY_LABELS: Record<TaskCategory, string> = {
 };
 
 export type TaskListItem = SelectTask & {
-  communityName: string;
+  clienteNombre: string | null;  // sustituye a communityName
   creatorName: string;
   assigneeName: string;
   nplTitulo: string | null;
 };
 
 export type TaskFormOptions = {
-  communities: Array<{ id: string; name: string }>;
+  clientes: Array<{ id: number; nombre: string }>;  // sustituye a communities
   users: Array<{ id: string; name: string; email: string }>;
   npls: Array<{ id: number; tituloOperacion: string }>;
 };

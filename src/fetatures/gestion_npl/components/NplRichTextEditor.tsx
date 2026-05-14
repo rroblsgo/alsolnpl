@@ -13,6 +13,7 @@ import TextAlign from '@tiptap/extension-text-align';
 import { TextStyle, BackgroundColor } from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 import FontFamily from '@tiptap/extension-font-family';
+import Image from '@tiptap/extension-image';
 import { TableCellTextAlign } from '@/src/fetatures/tasks/components/extensions/TableCellTextAlign';
 import RichTextToolbar from '@/src/shared/components/editor/RichTextToolbar';
 
@@ -45,6 +46,12 @@ export default function NplRichTextEditor({
         },
       }),
       Placeholder.configure({ placeholder }),
+      // Extensión Image para insertar imágenes estáticas de /public
+      Image.configure({
+        HTMLAttributes: {
+          class: 'max-w-full rounded-md my-2',
+        },
+      }),
       Table.configure({ resizable: true }),
       TableRow,
       TableHeader,
@@ -78,8 +85,7 @@ export default function NplRichTextEditor({
 
   return (
     <div className="space-y-0">
-      {/* showDate=false — NPL no necesita insertar fechas */}
-      <RichTextToolbar editor={editor} showDate={true} />
+      <RichTextToolbar editor={editor} showDate={true} showImages={true} />
       <EditorContent editor={editor} />
       {error && (
         <p className="mt-1 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">

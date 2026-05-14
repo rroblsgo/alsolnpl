@@ -23,7 +23,7 @@ export default function EditTask({ task, options, returnTo }: Props) {
       description: task.description,
       notas: task.notas ?? '',
       expediente: task.expediente,
-      communityId: task.communityId,
+      clienteId: task.clienteId ?? null,   // sustituye communityId
       status: task.status,
       priority: task.priority,
       category: task.category,

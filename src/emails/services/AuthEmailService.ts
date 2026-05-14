@@ -20,7 +20,7 @@ export class AuthEmailService {
     await EmailService.send({
       from: emailConfig.from.verification,
       to: data.email,
-      subject: 'Meeti - Confirma tu cuenta',
+      subject: 'AlsolNPL - Confirma tu cuenta',
       text: renderVerificationEmailText(data),
       html: renderVerificationEmail(data),
     });
@@ -32,7 +32,7 @@ export class AuthEmailService {
     await EmailService.send({
       from: emailConfig.from.passwordReset,
       to: data.email,
-      subject: 'Meeti - Reestablece tu Password',
+      subject: 'AlsolNPL - Restablece tu contraseña',
       text: renderPasswordResetEmailText(data),
       html: renderPasswordResetEmail(data),
     });

@@ -1,13 +1,13 @@
-import { db } from "@/src/db";
-import { community, task, users, npl } from "@/src/db/schema";
-import { asc, desc, eq, or, sql } from "drizzle-orm";
-import { alias } from "drizzle-orm/pg-core";
+import { db } from '@/src/db';
+import { task, users, npl, clientes } from '@/src/db/schema';
+import { asc, eq, or, sql } from 'drizzle-orm';
+import { alias } from 'drizzle-orm/pg-core';
 import {
   InsertTask,
   SelectTask,
   TaskListItem,
   TaskStatus,
-} from "../types/task.types";
+} from '../types/task.types';
 
 export interface ITaskRepository {
   create(data: InsertTask): Promise<SelectTask>;
@@ -15,20 +15,12 @@ export interface ITaskRepository {
   listByUser(userId: string): Promise<TaskListItem[]>;
   listAll(): Promise<TaskListItem[]>;
   listByNpl(nplId: number): Promise<TaskListItem[]>;
-  update(
-    taskId: number,
-    data: Partial<SelectTask>,
-  ): Promise<SelectTask | undefined>;
-  updateStatus(
-    taskId: number,
-    status: TaskStatus,
-    completedAt: Date | null,
-  ): Promise<SelectTask | undefined>;
+  listByCliente(clienteId: number): Promise<TaskListItem[]>;
+  update(taskId: number, data: Partial<SelectTask>): Promise<SelectTask | undefined>;
+  updateStatus(taskId: number, status: TaskStatus, completedAt: Date | null): Promise<SelectTask | undefined>;
   remove(taskId: number): Promise<void>;
-  listCommunityOptions(): Promise<Array<{ id: string; name: string }>>;
-  listUserOptions(): Promise<
-    Array<{ id: string; name: string; email: string }>
-  >;
+  listClienteOptions(): Promise<Array<{ id: number; nombre: string }>>;
+  listUserOptions(): Promise<Array<{ id: string; name: string; email: string }>>;
   listNplOptions(): Promise<Array<{ id: number; tituloOperacion: string }>>;
 }
 
@@ -41,7 +33,7 @@ const buildSelectFields = (
   description: task.description,
   notas: task.notas,
   expediente: task.expediente,
-  communityId: task.communityId,
+  clienteId: task.clienteId,
   status: task.status,
   priority: task.priority,
   category: task.category,
@@ -53,7 +45,7 @@ const buildSelectFields = (
   completedAt: task.completedAt,
   creatorId: task.creatorId,
   assigneeId: task.assigneeId,
-  communityName: community.name,
+  clienteNombre: clientes.nombre,
   creatorName: creator.name,
   assigneeName: assignee.name,
   nplTitulo: npl.tituloOperacion,
@@ -74,45 +66,48 @@ class TaskRepository implements ITaskRepository {
     return result;
   }
 
-  async listByUser(userId: string): Promise<TaskListItem[]> {
-    const creator = alias(users, "task_creator");
-    const assignee = alias(users, "task_assignee");
+  private baseQuery(
+    creator: ReturnType<typeof alias>,
+    assignee: ReturnType<typeof alias>,
+  ) {
     return db
       .select(buildSelectFields(creator, assignee))
       .from(task)
-      .innerJoin(community, eq(task.communityId, community.id))
+      .leftJoin(clientes, eq(task.clienteId, clientes.id))
       .innerJoin(creator, eq(task.creatorId, creator.id))
       .innerJoin(assignee, eq(task.assigneeId, assignee.id))
-      .leftJoin(npl, eq(task.nplId, npl.id))
+      .leftJoin(npl, eq(task.nplId, npl.id));
+  }
+
+  async listByUser(userId: string): Promise<TaskListItem[]> {
+    const creator = alias(users, 'task_creator');
+    const assignee = alias(users, 'task_assignee');
+    return this.baseQuery(creator, assignee)
       .where(or(eq(task.creatorId, userId), eq(task.assigneeId, userId)))
-      .orderBy(sql`${task.fechaPropuesta} DESC NULLS LAST`);
+      .orderBy(sql`${task.fechaPropuesta} DESC NULLS LAST`) as Promise<TaskListItem[]>;
   }
 
   async listAll(): Promise<TaskListItem[]> {
-    const creator = alias(users, "task_creator");
-    const assignee = alias(users, "task_assignee");
-    return db
-      .select(buildSelectFields(creator, assignee))
-      .from(task)
-      .innerJoin(community, eq(task.communityId, community.id))
-      .innerJoin(creator, eq(task.creatorId, creator.id))
-      .innerJoin(assignee, eq(task.assigneeId, assignee.id))
-      .leftJoin(npl, eq(task.nplId, npl.id))
-      .orderBy(sql`${task.fechaPropuesta} DESC NULLS LAST`);
+    const creator = alias(users, 'task_creator');
+    const assignee = alias(users, 'task_assignee');
+    return this.baseQuery(creator, assignee)
+      .orderBy(sql`${task.fechaPropuesta} DESC NULLS LAST`) as Promise<TaskListItem[]>;
   }
 
   async listByNpl(nplId: number): Promise<TaskListItem[]> {
-    const creator = alias(users, "task_creator");
-    const assignee = alias(users, "task_assignee");
-    return db
-      .select(buildSelectFields(creator, assignee))
-      .from(task)
-      .innerJoin(community, eq(task.communityId, community.id))
-      .innerJoin(creator, eq(task.creatorId, creator.id))
-      .innerJoin(assignee, eq(task.assigneeId, assignee.id))
-      .leftJoin(npl, eq(task.nplId, npl.id))
+    const creator = alias(users, 'task_creator');
+    const assignee = alias(users, 'task_assignee');
+    return this.baseQuery(creator, assignee)
       .where(eq(task.nplId, nplId))
-      .orderBy(sql`${task.fechaPropuesta} DESC NULLS LAST`);
+      .orderBy(sql`${task.fechaPropuesta} DESC NULLS LAST`) as Promise<TaskListItem[]>;
+  }
+
+  async listByCliente(clienteId: number): Promise<TaskListItem[]> {
+    const creator = alias(users, 'task_creator');
+    const assignee = alias(users, 'task_assignee');
+    return this.baseQuery(creator, assignee)
+      .where(eq(task.clienteId, clienteId))
+      .orderBy(sql`${task.fechaPropuesta} DESC NULLS LAST`) as Promise<TaskListItem[]>;
   }
 
   async update(taskId: number, data: Partial<SelectTask>) {
@@ -124,11 +119,7 @@ class TaskRepository implements ITaskRepository {
     return result;
   }
 
-  async updateStatus(
-    taskId: number,
-    status: TaskStatus,
-    completedAt: Date | null,
-  ) {
+  async updateStatus(taskId: number, status: TaskStatus, completedAt: Date | null) {
     const [result] = await db
       .update(task)
       .set({ status, completedAt })
@@ -141,11 +132,11 @@ class TaskRepository implements ITaskRepository {
     await db.delete(task).where(eq(task.id, taskId));
   }
 
-  async listCommunityOptions() {
+  async listClienteOptions() {
     return db
-      .select({ id: community.id, name: community.name })
-      .from(community)
-      .orderBy(asc(community.name));
+      .select({ id: clientes.id, nombre: clientes.nombre })
+      .from(clientes)
+      .orderBy(asc(clientes.nombre));
   }
 
   async listUserOptions() {

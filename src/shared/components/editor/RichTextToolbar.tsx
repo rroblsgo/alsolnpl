@@ -1,17 +1,5 @@
 'use client';
 
-/**
- * RichTextToolbar
- * Toolbar compacta compartida para TaskRichTextEditor y NplRichTextEditor.
- * Ubicación: src/shared/components/editor/RichTextToolbar.tsx
- *
- * Rediseño respecto a la versión anterior:
- * - Una sola barra horizontal con separadores finos en lugar de grupos en caja
- * - Botones reducidos a h-7 w-7 (iconos) y h-7 px-2 (texto)
- * - Sin bordes individuales por grupo — fondo unificado bg-slate-100
- * - Separador visual | entre grupos
- */
-
 import type { Editor } from '@tiptap/react';
 import {
   Bold, Italic, Strikethrough,
@@ -23,6 +11,7 @@ import {
   Table2, Rows3, Columns3, Trash2,
   Undo2, Redo2,
   CalendarDays,
+  Image as ImageIcon,
 } from 'lucide-react';
 import clsx from 'clsx';
 import { useMemo, useState } from 'react';
@@ -46,6 +35,21 @@ const HIGHLIGHT_COLORS = [
   { label: 'Rosa claro',  value: '#fbcfe8' },
 ];
 
+/**
+ * Imágenes estáticas disponibles en /public para insertar en el editor.
+ * Añade aquí nuevas entradas cuando subas imágenes a /public.
+ * El campo `src` es la ruta relativa a /public (sin el /public inicial).
+ */
+export const STATIC_IMAGES = [
+  {
+    src: '/images/linea-temporal-npl.png',
+    label: 'Línea temporal NPL',
+    width: 800,
+  },
+  // Añade más imágenes aquí:
+  // { src: '/images/esquema-subasta.png', label: 'Esquema subasta', width: 600 },
+] as const;
+
 // ─── Subcomponentes ───────────────────────────────────────────────────────────
 
 type BtnProps = {
@@ -54,7 +58,7 @@ type BtnProps = {
   title: string;
   disabled?: boolean;
   children: React.ReactNode;
-  wide?: boolean; // para botones de texto como "Mono" o "A"
+  wide?: boolean;
 };
 
 function Btn({ onClick, active, title, disabled, children, wide }: BtnProps) {
@@ -101,12 +105,11 @@ function ColorDot({
   );
 }
 
-// Separador vertical entre grupos
 function Sep() {
   return <span className="mx-0.5 h-5 w-px bg-slate-300" />;
 }
 
-// ─── InsertDateButton inline ──────────────────────────────────────────────────
+// ─── InsertDateButton ─────────────────────────────────────────────────────────
 
 function InsertDateBtn({ editor }: { editor: Editor }) {
   const [open, setOpen] = useState(false);
@@ -130,7 +133,6 @@ function InsertDateBtn({ editor }: { editor: Editor }) {
       <Btn title="Insertar fecha" onClick={() => setOpen((p) => !p)}>
         <CalendarDays className="h-3.5 w-3.5" />
       </Btn>
-
       {open && (
         <div className="absolute left-0 top-9 z-30 w-60 rounded-lg border border-slate-200 bg-white p-3 shadow-xl">
           <p className="mb-2 text-xs font-medium text-slate-600">Insertar fecha</p>
@@ -146,19 +148,12 @@ function InsertDateBtn({ editor }: { editor: Editor }) {
             </p>
           )}
           <div className="mt-2 flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => { setOpen(false); setDateValue(''); }}
-              className="rounded border border-slate-300 px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-50"
-            >
+            <button type="button" onClick={() => { setOpen(false); setDateValue(''); }}
+              className="rounded border border-slate-300 px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-50">
               Cancelar
             </button>
-            <button
-              type="button"
-              onClick={insertDate}
-              disabled={!dateValue}
-              className="rounded bg-slate-800 px-2.5 py-1 text-xs text-white disabled:opacity-40"
-            >
+            <button type="button" onClick={insertDate} disabled={!dateValue}
+              className="rounded bg-slate-800 px-2.5 py-1 text-xs text-white disabled:opacity-40">
               Insertar
             </button>
           </div>
@@ -168,14 +163,97 @@ function InsertDateBtn({ editor }: { editor: Editor }) {
   );
 }
 
+// ─── InsertStaticImageBtn ─────────────────────────────────────────────────────
+
+/**
+ * Selector de imágenes estáticas de /public.
+ * Muestra una galería de miniaturas; al clicar inserta la imagen en el editor
+ * usando la extensión Image de TipTap (debe estar registrada en el editor).
+ *
+ * Las imágenes disponibles se configuran en el array STATIC_IMAGES arriba.
+ */
+function InsertStaticImageBtn({ editor }: { editor: Editor }) {
+  const [open, setOpen] = useState(false);
+
+  const insertImage = (src: string, label: string, width: number) => {
+    editor
+      .chain()
+      .focus()
+      .setImage({ src, alt: label, title: label })
+      .run();
+
+    // Tras insertar, añadir un párrafo vacío para que el cursor salga de la imagen
+    editor.chain().focus().createParagraphNear().run();
+    setOpen(false);
+  };
+
+  if (STATIC_IMAGES.length === 0) return null;
+
+  return (
+    <div className="relative">
+      <Btn title="Insertar imagen" onClick={() => setOpen((p) => !p)}>
+        <ImageIcon className="h-3.5 w-3.5" />
+      </Btn>
+
+      {open && (
+        <>
+          {/* Overlay para cerrar al clicar fuera */}
+          <div
+            className="fixed inset-0 z-20"
+            onClick={() => setOpen(false)}
+          />
+          <div className="absolute left-0 top-9 z-30 w-72 rounded-lg border border-slate-200 bg-white p-3 shadow-xl">
+            <p className="mb-2 text-xs font-medium text-slate-600">
+              Selecciona una imagen
+            </p>
+            <div className="space-y-2 max-h-64 overflow-y-auto">
+              {STATIC_IMAGES.map((img) => (
+                <button
+                  key={img.src}
+                  type="button"
+                  onClick={() => insertImage(img.src, img.label, img.width)}
+                  className="w-full rounded-md border border-slate-200 p-2 text-left hover:border-blue-400 hover:bg-blue-50 transition-colors"
+                >
+                  {/* Miniatura */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={img.src}
+                    alt={img.label}
+                    className="w-full rounded object-contain max-h-20 bg-gray-50"
+                  />
+                  <p className="mt-1.5 text-xs text-slate-600 font-medium">
+                    {img.label}
+                  </p>
+                </button>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setOpen(false)}
+              className="mt-2 w-full rounded border border-slate-300 px-2.5 py-1 text-xs text-slate-600 hover:bg-slate-50"
+            >
+              Cancelar
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 // ─── Toolbar principal ────────────────────────────────────────────────────────
 
 type Props = {
   editor: Editor;
-  showDate?: boolean; // solo Tasks usa el botón de fecha
+  showDate?: boolean;
+  showImages?: boolean; // habilita el botón de insertar imagen estática
 };
 
-export default function RichTextToolbar({ editor, showDate = false }: Props) {
+export default function RichTextToolbar({
+  editor,
+  showDate = false,
+  showImages = false,
+}: Props) {
   const setLink = () => {
     const prev = editor.getAttributes('link').href || '';
     const url = window.prompt('Introduce la URL', prev);
@@ -287,15 +365,24 @@ export default function RichTextToolbar({ editor, showDate = false }: Props) {
       <Btn title="Insertar/editar enlace" active={editor.isActive('link')} onClick={setLink}>
         <LinkIcon className="h-3.5 w-3.5" />
       </Btn>
-      <Btn title="Quitar enlace" onClick={() => editor.chain().focus().unsetLink().run()}>
+      <Btn title="Quitar enlace"
+        onClick={() => editor.chain().focus().unsetLink().run()}>
         <Unlink className="h-3.5 w-3.5" />
       </Btn>
 
-      {/* Fecha (solo si showDate) */}
+      {/* Fecha */}
       {showDate && (
         <>
           <Sep />
           <InsertDateBtn editor={editor} />
+        </>
+      )}
+
+      {/* Imagen estática */}
+      {showImages && (
+        <>
+          <Sep />
+          <InsertStaticImageBtn editor={editor} />
         </>
       )}
 

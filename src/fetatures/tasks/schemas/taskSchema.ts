@@ -26,7 +26,10 @@ export const TaskSchema = z.object({
     .min(2, { error: 'El expediente es obligatorio' })
     .max(100, { error: 'Máximo 100 caracteres' }),
 
-  communityId: z.uuid({ error: 'Selecciona una comunidad válida' }),
+  // communityId eliminado
+  // Cliente vinculado (opcional)
+  clienteId: z.number().int().positive().nullable().optional(),
+
   status: z.enum(TASK_STATUSES, { error: 'Selecciona un estado válido' }),
   priority: z.enum(TASK_PRIORITIES, { error: 'Selecciona una prioridad válida' }),
   category: z.enum(TASK_CATEGORIES, { error: 'Selecciona una categoría válida' }),

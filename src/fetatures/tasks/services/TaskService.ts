@@ -1,21 +1,21 @@
-import { User } from 'better-auth';
 import { notFound } from 'next/navigation';
 import { TaskInput } from '../schemas/taskSchema';
 import { TaskPolicy } from '../policies/TaskPolicy';
 import { ITaskRepository, taskRepository } from './TaskRepository';
 import { SelectTask, TaskFormOptions, TaskStatus } from '../types/task.types';
 import { notificationService } from '@/src/fetatures/notifications/services/NotificationService';
+import { User } from '@/src/fetatures/auth/types/auth.types';
 
 class TaskService {
   constructor(private taskRepository: ITaskRepository) {}
 
   async getTaskFormOptions(): Promise<TaskFormOptions> {
-    const [communities, users, npls] = await Promise.all([
-      this.taskRepository.listCommunityOptions(),
+    const [clientes, users, npls] = await Promise.all([
+      this.taskRepository.listClienteOptions(),
       this.taskRepository.listUserOptions(),
       this.taskRepository.listNplOptions(),
     ]);
-    return { communities, users, npls };
+    return { clientes, users, npls };
   }
 
   async createTask(data: TaskInput, creatorId: string) {
@@ -23,6 +23,7 @@ class TaskService {
       ...data,
       notas: data.notas || null,
       nplId: data.nplId ?? null,
+      clienteId: data.clienteId ?? null,
       fechaPropuesta: (data.fechaPropuesta as Date | null | undefined) ?? null,
       fechaLimite: (data.fechaLimite as Date | null | undefined) ?? null,
       creatorId,
@@ -56,6 +57,10 @@ class TaskService {
     return this.taskRepository.listByNpl(nplId);
   }
 
+  async listTasksByCliente(clienteId: number) {
+    return this.taskRepository.listByCliente(clienteId);
+  }
+
   async updateTask(taskId: number, data: TaskInput, user: User) {
     const currentTask = await this.getTask(taskId);
     if (!TaskPolicy.canEdit(user, currentTask)) {
@@ -71,6 +76,7 @@ class TaskService {
       ...data,
       notas: data.notas || null,
       nplId: data.nplId ?? null,
+      clienteId: data.clienteId ?? null,
       fechaPropuesta: (data.fechaPropuesta as Date | null | undefined) ?? null,
       fechaLimite: (data.fechaLimite as Date | null | undefined) ?? null,
       completedAt,
@@ -80,9 +86,7 @@ class TaskService {
     const isDifferentUser = currentTask.creatorId !== currentTask.assigneeId;
 
     if (isAssigneeActing && isDifferentUser) {
-      const event =
-        data.status === 'COMPLETADA' ? 'task_completed' : 'task_modified';
-
+      const event = data.status === 'COMPLETADA' ? 'task_completed' : 'task_modified';
       await notificationService.createTaskNotification({
         creatorId: currentTask.creatorId,
         actorName: user.name ?? user.email,
@@ -98,25 +102,17 @@ class TaskService {
   async updateTaskStatus(taskId: number, status: TaskStatus, user: User) {
     const currentTask = await this.getTask(taskId);
     if (!TaskPolicy.canChangeStatus(user, currentTask)) {
-      throw new Error(
-        'No tienes permisos para cambiar el estado de esta tarea'
-      );
+      throw new Error('No tienes permisos para cambiar el estado de esta tarea');
     }
 
     const completedAt = status === 'COMPLETADA' ? new Date() : null;
-    const updatedTask = await this.taskRepository.updateStatus(
-      taskId,
-      status,
-      completedAt
-    );
+    const updatedTask = await this.taskRepository.updateStatus(taskId, status, completedAt);
 
     const isAssigneeActing = user.id === currentTask.assigneeId;
     const isDifferentUser = currentTask.creatorId !== currentTask.assigneeId;
 
     if (isAssigneeActing && isDifferentUser) {
-      const event =
-        status === 'COMPLETADA' ? 'task_completed' : 'task_modified';
-
+      const event = status === 'COMPLETADA' ? 'task_completed' : 'task_modified';
       await notificationService.createTaskNotification({
         creatorId: currentTask.creatorId,
         actorName: user.name ?? user.email,

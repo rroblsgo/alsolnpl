@@ -1,8 +1,8 @@
 export const emailConfig = {
   from: {
-    verification: 'Meeti <contacto@alsolweb.eu>',
-    passwordReset: 'Meeti <admin@meeti.com>',
-    default: 'Meeti <noreply@meeti.com>',
+    verification:  'AlsolNPL <contacto@alsolweb.eu>',
+    passwordReset: 'AlsolNPL <contacto@alsolweb.eu>',
+    default:       'AlsolNPL <contacto@alsolweb.eu>',
   },
   tokenExpiration: '1 hora',
 } as const;

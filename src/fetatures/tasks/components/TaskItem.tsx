@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import type { Route } from 'next';
-import { Building2, User, Briefcase, Calendar, Tag, Clock } from 'lucide-react';
+import { Building2, User, Briefcase, Calendar, Tag, Clock, UserCircle } from 'lucide-react';
 import { TaskListItem, TASK_CATEGORY_LABELS } from '../types/task.types';
 import TaskPriorityBadge from './TaskPriorityBadge';
 import TaskStatusBadge from './TaskStatusBadge';
@@ -35,14 +35,13 @@ export default function TaskItem({ task }: Props) {
       <li className="py-5">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:gap-6">
 
-          {/* Contenido principal — más espacio */}
           <div className="min-w-0 flex-1 space-y-2">
 
             {/* Título + badges */}
             <div className="flex flex-wrap items-center gap-2">
               <Link
                 href={`/dashboard/tasks/${task.id}`}
-                className="text-base font-bold text-gray-900 hover:text-orange-600"
+                className="text-base font-bold text-gray-900 hover:text-blue-600"
               >
                 {task.title}
               </Link>
@@ -50,7 +49,7 @@ export default function TaskItem({ task }: Props) {
               <TaskPriorityBadge priority={task.priority} />
             </div>
 
-            {/* Descripción completa */}
+            {/* Descripción */}
             <p className="text-sm text-gray-500">{task.description}</p>
 
             {/* NPL vinculado */}
@@ -70,15 +69,28 @@ export default function TaskItem({ task }: Props) {
               </div>
             )}
 
-            {/* Meta row 1: expediente, comunidad, categoría */}
+            {/* Cliente vinculado */}
+            {task.clienteId && task.clienteNombre && (
+              <div className="flex items-center gap-1.5">
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 ring-1 ring-emerald-600/20 ring-inset">
+                  <UserCircle className="h-3 w-3" />
+                  Cliente
+                </span>
+                <Link
+                  href={`/dashboard/clientes/${task.clienteId}`}
+                  className="text-xs text-emerald-600 hover:underline truncate max-w-[260px]"
+                  title={task.clienteNombre}
+                >
+                  {task.clienteNombre}
+                </Link>
+              </div>
+            )}
+
+            {/* Meta row 1: expediente, categoría */}
             <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs text-gray-500">
               <span className="flex items-center gap-1">
                 <Briefcase className="h-3.5 w-3.5 text-gray-400" />
                 {task.expediente}
-              </span>
-              <span className="flex items-center gap-1">
-                <Building2 className="h-3.5 w-3.5 text-gray-400" />
-                {task.communityName}
               </span>
               <span className="inline-flex rounded-full bg-gray-100 px-2 py-0.5 font-medium text-gray-600">
                 <Tag className="mr-1 h-3 w-3 self-center" />
@@ -111,11 +123,11 @@ export default function TaskItem({ task }: Props) {
             </div>
           </div>
 
-          {/* Acciones — solo editar y eliminar */}
+          {/* Acciones */}
           <div className="flex shrink-0 items-center gap-2 lg:flex-col lg:items-end">
             <Link
               href={`/dashboard/tasks/${task.id}/edit?returnTo=${encodeURIComponent(currentUrl)}` as Route}
-              className="rounded-md bg-orange-500 px-4 py-1.5 text-xs font-semibold text-white hover:bg-orange-600"
+              className="rounded-md bg-blue-600 px-4 py-1.5 text-xs font-semibold text-white hover:bg-blue-700"
             >
               Editar
             </Link>
