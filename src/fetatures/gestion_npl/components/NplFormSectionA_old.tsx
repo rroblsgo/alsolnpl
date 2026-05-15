@@ -10,7 +10,6 @@ import {
 import NplImageUploader from './NplImageUploader';
 import NplRichTextEditor from './NplRichTextEditor';
 import ProvinciasMunicipiosSelect from './ProvinciasMunicipiosSelect';
-import CatastroLookupButton from './CatastroLookupButton';
 
 export default function NplFormSectionA() {
   const {
@@ -202,7 +201,7 @@ export default function NplFormSectionA() {
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <div>
           <FormLabel htmlFor="anyConstruccion">Año de construcción</FormLabel>
           <FormInput
@@ -218,6 +217,14 @@ export default function NplFormSectionA() {
           )}
         </div>
         <div>
+          <FormLabel htmlFor="refCatastral">Ref. catastral</FormLabel>
+          <FormInput
+            id="refCatastral"
+            type="text"
+            {...register('refCatastral')}
+          />
+        </div>
+        <div>
           <FormLabel htmlFor="fincaRegistral">Finca registral</FormLabel>
           <FormInput
             id="fincaRegistral"
@@ -225,18 +232,6 @@ export default function NplFormSectionA() {
             {...register('fincaRegistral')}
           />
         </div>
-      </div>
-
-      {/* Ref. catastral — ocupa todo el ancho para dar espacio al buscador */}
-      <div>
-        <FormLabel htmlFor="refCatastral">Ref. catastral</FormLabel>
-        <FormInput
-          id="refCatastral"
-          type="text"
-          placeholder="Ej. 6405410PB5260N0128FD"
-          {...register('refCatastral')}
-        />
-        <CatastroLookupButton />
       </div>
 
       <div>
