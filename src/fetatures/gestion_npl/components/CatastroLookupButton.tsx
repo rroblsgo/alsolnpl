@@ -12,7 +12,7 @@ import {
   debugCatastroXmlAction,
   debugCatastroRccoorAction,
 } from '../actions/catastro-actions';
-import { useSession } from '@/src/lib/auth-client';
+import { useSessionWithRole } from '@/src/lib/auth-client';
 import { ROLES } from '@/src/lib/roles';
 import type { CatastroInmueble, CatastroCoordenadas } from '@/src/lib/catastro/catastro.helper';
 
@@ -25,7 +25,7 @@ type PanelEstado =
 
 export default function CatastroLookupButton() {
   const { watch, setValue } = useFormContext<NplInput>();
-  const { data: session } = useSession();
+  const { data: session } = useSessionWithRole();
   const [estado, setEstado] = useState<PanelEstado>({ tipo: 'idle' });
 
   const refCatastral = watch('refCatastral') ?? '';
