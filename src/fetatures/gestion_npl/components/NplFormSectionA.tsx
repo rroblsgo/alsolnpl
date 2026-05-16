@@ -11,6 +11,7 @@ import NplImageUploader from './NplImageUploader';
 import NplRichTextEditor from './NplRichTextEditor';
 import ProvinciasMunicipiosSelect from './ProvinciasMunicipiosSelect';
 import CatastroLookupButton from './CatastroLookupButton';
+import NplMapPreview from './NplMapPreview';
 
 export default function NplFormSectionA() {
   const {
@@ -227,7 +228,7 @@ export default function NplFormSectionA() {
         </div>
       </div>
 
-      {/* Ref. catastral — ocupa todo el ancho para dar espacio al buscador */}
+      {/* Ref. catastral + buscador Catastro */}
       <div>
         <FormLabel htmlFor="refCatastral">Ref. catastral</FormLabel>
         <FormInput
@@ -238,6 +239,31 @@ export default function NplFormSectionA() {
         />
         <CatastroLookupButton />
       </div>
+
+      {/* Coordenadas Catastro — editables manualmente, se graban con el formulario */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <FormLabel htmlFor="latCatastro">Latitud (Catastro)</FormLabel>
+          <FormInput
+            id="latCatastro"
+            type="text"
+            placeholder="Ej. 37.215010"
+            {...register('latCatastro')}
+          />
+        </div>
+        <div>
+          <FormLabel htmlFor="lngCatastro">Longitud (Catastro)</FormLabel>
+          <FormInput
+            id="lngCatastro"
+            type="text"
+            placeholder="Ej. -7.235894"
+            {...register('lngCatastro')}
+          />
+        </div>
+      </div>
+
+      {/* Mapa — aparece en cuanto hay coordenadas válidas */}
+      <NplMapPreview />
 
       <div>
         <FormLabel htmlFor="datosRegistro">Datos de registro</FormLabel>

@@ -19,6 +19,7 @@ import RichTextContent from '@/src/shared/components/ui/RichTextContent';
 import NplStatusBadge from '@/src/fetatures/gestion_npl/components/NplStatusBadge';
 import { generatePageTitle } from '@/src/shared/utils/metadata';
 import DownloadPdfButton from '@/src/fetatures/gestion_npl/components/DownloadPdfButton';
+import { DynamicNplLocation } from '@/src/fetatures/gestion_npl/components/DynamicNplLocation';
 import { documentService } from '@/src/fetatures/documents/services/DocumentService';
 import DocumentsList from '@/src/fetatures/documents/components/DocumentsList';
 import { taskService } from '@/src/fetatures/tasks/services/TaskService';
@@ -256,6 +257,23 @@ export default async function NplDetailDashboardPage({ params }: Props) {
           )}
         </dl>
       </Section>
+
+      {/* ── Mapa Catastro ─────────────────────────────────────────────── */}
+      {npl.latCatastro && npl.lngCatastro && (
+        <Section title="📍 Ubicación catastral">
+          {npl.direccion && (
+            <p className="mb-3 text-sm text-gray-500">
+              {[npl.direccion, npl.municipio, npl.provincia].filter(Boolean).join(', ')}
+            </p>
+          )}
+          <DynamicNplLocation
+            lat={parseFloat(npl.latCatastro)}
+            lng={parseFloat(npl.lngCatastro)}
+            direccion={[npl.direccion, npl.municipio, npl.provincia].filter(Boolean).join(', ')}
+            titulo={npl.tituloOperacion}
+          />
+        </Section>
+      )}
 
       {/* ── B. Rentabilidad ──────────────────────────────────────────────── */}
       <Section title="B. Rentabilidad">

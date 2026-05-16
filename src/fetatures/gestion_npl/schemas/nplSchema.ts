@@ -46,6 +46,8 @@ const NplSectionASchema = z.object({
       message: 'Introduce un año válido (4 dígitos)',
     }),
   refCatastral: z.string().trim().max(50).optional().or(z.literal('')),
+  latCatastro: z.string().optional().or(z.literal('')),
+  lngCatastro: z.string().optional().or(z.literal('')),
   fincaRegistral: z.string().trim().max(100).optional().or(z.literal('')),
   datosRegistro: z.string().trim().optional().or(z.literal('')),
   imagenAsociada: z.string().trim().max(255).optional().or(z.literal('')),

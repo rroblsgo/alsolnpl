@@ -39,6 +39,8 @@ const nplSelectFields = {
   superficieDetalles: npl.superficieDetalles,
   anyConstruccion: npl.anyConstruccion,
   refCatastral: npl.refCatastral,
+  latCatastro: npl.latCatastro,
+  lngCatastro: npl.lngCatastro,
   fincaRegistral: npl.fincaRegistral,
   datosRegistro: npl.datosRegistro,
   imagenAsociada: npl.imagenAsociada,

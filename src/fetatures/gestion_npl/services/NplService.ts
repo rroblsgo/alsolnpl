@@ -46,6 +46,8 @@ function mapInputToDb(data: NplInput) {
     informacionInversor: data.informacionInversor || null,
     fondo: data.fondo || null,
     nuestroCodigoNpl: data.nuestroCodigoNpl || null,
+    latCatastro: data.latCatastro || null,
+    lngCatastro: data.lngCatastro || null,
   };
 }
 

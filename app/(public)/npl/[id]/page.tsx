@@ -5,6 +5,7 @@ import { NPL_TIPO_INMUEBLE_LABELS } from '@/src/fetatures/gestion_npl/types/npl.
 import RichTextContent from '@/src/shared/components/ui/RichTextContent';
 import Image from 'next/image';
 import Link from 'next/link';
+import { DynamicNplLocation } from '@/src/fetatures/gestion_npl/components/DynamicNplLocation';
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -48,6 +49,24 @@ export default async function NplDetailPage({ params }: Props) {
             width={800}
             height={600}
           />
+        )}
+
+        {/* Mapa Catastro */}
+        {npl.latCatastro && npl.lngCatastro && (
+          <div className="rounded-xl bg-white p-6 shadow space-y-3">
+            <h2 className="font-semibold text-gray-900 border-b pb-2 flex items-center gap-2">
+              📍 Ubicación
+            </h2>
+            {npl.direccion && (
+              <p className="text-sm text-gray-500">{npl.direccion}</p>
+            )}
+            <DynamicNplLocation
+              lat={parseFloat(npl.latCatastro)}
+              lng={parseFloat(npl.lngCatastro)}
+              direccion={[npl.direccion, npl.municipio, npl.provincia].filter(Boolean).join(', ')}
+              titulo={npl.tituloOperacion}
+            />
+          </div>
         )}
 
         {/* Métricas */}

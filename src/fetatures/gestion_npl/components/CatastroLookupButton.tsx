@@ -60,13 +60,17 @@ export default function CatastroLookupButton() {
 
   function handleAutoRellenar() {
     if (estado.tipo !== 'ok') return;
-    const { inmueble, pdfUrl } = estado;
+    const { inmueble, pdfUrl, coords } = estado;
     if (inmueble.direccionCompleta) setValue('direccion',     inmueble.direccionCompleta,            { shouldDirty: true });
     if (inmueble.municipio)         setValue('municipio',     inmueble.municipio,                    { shouldDirty: true });
     if (inmueble.provincia)         setValue('provincia',     inmueble.provincia,                    { shouldDirty: true });
     if (inmueble.codigoPostal)      setValue('codigoPostal',  inmueble.codigoPostal,                 { shouldDirty: true });
     if (inmueble.superficieConstruida !== null) setValue('superficieConst', String(inmueble.superficieConstruida), { shouldDirty: true });
     if (inmueble.anoConstruccion !== null)      setValue('anyConstruccion', String(inmueble.anoConstruccion),      { shouldDirty: true });
+    // Guardar coordenadas del Catastro en el formulario
+    if (coords?.lat) setValue('latCatastro', String(coords.lat), { shouldDirty: true });
+    if (coords?.lon) setValue('lngCatastro', String(coords.lon), { shouldDirty: true });
+
     const fecha = new Date().toLocaleDateString('es-ES');
     setValue('actuacionesSeguidas', `[Consulta Catastro ${fecha}] RC: ${inmueble.referenciaCatastral} | PDF: ${pdfUrl}`, { shouldDirty: true });
   }

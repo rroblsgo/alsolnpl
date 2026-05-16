@@ -74,6 +74,8 @@ export const npl = pgTable('npls', {
   superficieDetalles: text('superficie_detalles'),
   anyConstruccion: integer('any_construccion'),
   refCatastral: varchar('ref_catastral', { length: 50 }),
+  latCatastro: numeric('lat_catastro', { precision: 12, scale: 8 }),
+  lngCatastro: numeric('lng_catastro', { precision: 12, scale: 8 }),
   fincaRegistral: varchar('finca_registral', { length: 100 }),
   datosRegistro: text('datos_registro'),
   imagenAsociada: varchar('imagen_asociada', { length: 255 }),
