@@ -1,6 +1,24 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { auth } from './auth';
+import { db } from '../db';
+import { users } from '../db/schema/auth-schema';
+import { eq } from 'drizzle-orm';
+
+// ── lastLoginAt ───────────────────────────────────────────────────────────────
+
+/**
+ * Actualiza lastLoginAt del usuario en BD.
+ * Fire-and-forget: no bloquea la respuesta si falla.
+ * Se llama desde requireDashboard() y requireNplAccess().
+ */
+function updateLastLogin(userId: string) {
+  db.update(users)
+    .set({ lastLoginAt: new Date() })
+    .where(eq(users.id, userId))
+    .execute()
+    .catch(() => {}); // silencioso — no crítico
+}
 import {
   type AppRole,
   DASHBOARD_ROLES,

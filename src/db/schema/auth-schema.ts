@@ -37,6 +37,7 @@ export const users = pgTable('users', {
   // El admin técnico actualiza este campo directamente en la DB.
   role: text('role').notNull().default('user'),
   // ─────────────────────────────────────────────────────────────────────────
+  lastLoginAt: timestamp('last_login_at'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at')
     .defaultNow()

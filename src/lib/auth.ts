@@ -2,6 +2,8 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { nextCookies } from 'better-auth/next-js';
 import { db } from '../db';
+import { users } from '../db/schema/auth-schema';
+import { eq } from 'drizzle-orm';
 import { AuthEmailService } from '../emails/services/AuthEmailService';
 
 export const auth = betterAuth({
@@ -34,9 +36,25 @@ export const auth = betterAuth({
       },
       role: {
         type: 'string',
-        required: false,   // opcional → compatible con registros Drizzle sin este campo
+        required: false,
         defaultValue: 'user',
-        input: false,      // el usuario no puede enviarlo al registrarse
+        input: false,
+      },
+
+    },
+  },
+  databaseHooks: {
+    session: {
+      create: {
+        // Se ejecuta tras crear cualquier sesión nueva (= sign-in exitoso).
+        // Cubre todos los roles: admin, legal, comercial, ver_only, cliente, agente, user.
+        after: async (session) => {
+          db.update(users)
+            .set({ lastLoginAt: new Date() })
+            .where(eq(users.id, session.userId))
+            .execute()
+            .catch(() => {}); // fire-and-forget — no crítico
+        },
       },
     },
   },
