@@ -41,6 +41,8 @@ export default function EditNpl({ npl, returnTo }: Props) {
       superficieDetalles: npl.superficieDetalles ?? '',
       anyConstruccion: npl.anyConstruccion ? String(npl.anyConstruccion) : '',
       refCatastral: npl.refCatastral ?? '',
+      latCatastro: n2s(npl.latCatastro),
+      lngCatastro: n2s(npl.lngCatastro),
       fincaRegistral: npl.fincaRegistral ?? '',
       datosRegistro: npl.datosRegistro ?? '',
       imagenAsociada: npl.imagenAsociada ?? '',
