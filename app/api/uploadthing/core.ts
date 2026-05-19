@@ -35,6 +35,17 @@ export const ourFileRouter = {
       return { uploadedBy: metadata.userId, name: file.name, size: file.size };
     }),
 
+  // ─── Excel files uploader ────────────────────────────────────────────────────────
+  excelUploader: f({ blob: { maxFileSize: '16MB', maxFileCount: 1 } })
+    .middleware(async ({ req }) => {
+      const { session } = await requireAuth();
+      if (!session) throw new UploadThingError('Unauthorized');
+      return { userId: session.user.id };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      return { uploadedBy: metadata.userId, name: file.name };
+    }),
+
   // ─── NPL: imágenes ────────────────────────────────────────────────────────
   nplImageUploader: f({
     image: { maxFileSize: '4MB', maxFileCount: 5 },

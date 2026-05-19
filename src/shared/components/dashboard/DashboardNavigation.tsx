@@ -14,20 +14,22 @@ import {
   Cog6ToothIcon,
   UserCircleIcon,
   UserPlusIcon,
+  BriefcaseIcon,
 } from '@heroicons/react/24/outline';
 
 const navigation = [
-  { name: 'Panel principal',  href: '/dashboard',           icon: HomeIcon },
-  { name: 'Gestión NPL',      href: '/dashboard/npl',       icon: BuildingOffice2Icon },
-  { name: 'Clientes',         href: '/dashboard/clientes',  icon: UserGroupIcon },
-  { name: 'Tareas',           href: '/dashboard/tasks',     icon: ClipboardDocumentListIcon },
-  { name: 'Documentos',       href: '/dashboard/documents', icon: DocumentTextIcon },
-  { name: 'Notificaciones',   href: '/dashboard/notifications', icon: BellIcon },
+  { name: 'Panel principal', href: '/dashboard', icon: HomeIcon },
+  { name: 'Gestión NPL', href: '/dashboard/npl', icon: BuildingOffice2Icon },
+  { name: 'Clientes', href: '/dashboard/clientes', icon: UserGroupIcon },
+  { name: 'Fondos', href: '/dashboard/fondos', icon: BriefcaseIcon },
+  { name: 'Tareas', href: '/dashboard/tasks', icon: ClipboardDocumentListIcon },
+  { name: 'Documentos', href: '/dashboard/documents', icon: DocumentTextIcon },
+  { name: 'Notificaciones', href: '/dashboard/notifications', icon: BellIcon },
 ];
 
 const accountNavigation = [
-  { name: 'Mi perfil',  href: '/dashboard/profile',   icon: UserCircleIcon },
-  { name: 'Seguridad',  href: '/dashboard/security',  icon: Cog6ToothIcon },
+  { name: 'Mi perfil', href: '/dashboard/profile', icon: UserCircleIcon },
+  { name: 'Seguridad', href: '/dashboard/security', icon: Cog6ToothIcon },
 ];
 
 type Props = {
@@ -57,7 +59,6 @@ export default function DashboardNavigation({ role }: Props) {
   return (
     <nav className="flex flex-1 flex-col">
       <ul role="list" className="flex flex-1 flex-col gap-y-7">
-
         {/* Plataforma */}
         <li>
           <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-2 px-2">
@@ -66,8 +67,14 @@ export default function DashboardNavigation({ role }: Props) {
           <ul role="list" className="-mx-2 space-y-1">
             {navigation.map((item) => (
               <li key={item.name}>
-                <Link href={item.href as Route} className={linkClass(item.href)}>
-                  <item.icon aria-hidden="true" className={iconClass(item.href)} />
+                <Link
+                  href={item.href as Route}
+                  className={linkClass(item.href)}
+                >
+                  <item.icon
+                    aria-hidden="true"
+                    className={iconClass(item.href)}
+                  />
                   {item.name}
                 </Link>
               </li>
@@ -92,7 +99,10 @@ export default function DashboardNavigation({ role }: Props) {
                     'group flex gap-x-3 rounded-lg p-2 text-sm font-medium transition-colors'
                   )}
                 >
-                  <item.icon aria-hidden="true" className="size-5 shrink-0 text-gray-400" />
+                  <item.icon
+                    aria-hidden="true"
+                    className="size-5 shrink-0 text-gray-400"
+                  />
                   {item.name}
                 </Link>
               </li>
@@ -110,7 +120,10 @@ export default function DashboardNavigation({ role }: Props) {
                     'group flex gap-x-3 rounded-lg p-2 text-sm font-medium transition-colors'
                   )}
                 >
-                  <UserPlusIcon aria-hidden="true" className="size-5 shrink-0 text-gray-400" />
+                  <UserPlusIcon
+                    aria-hidden="true"
+                    className="size-5 shrink-0 text-gray-400"
+                  />
                   Crear usuario
                 </Link>
               </li>
@@ -123,7 +136,6 @@ export default function DashboardNavigation({ role }: Props) {
             </p>
           </div>
         </li>
-
       </ul>
     </nav>
   );

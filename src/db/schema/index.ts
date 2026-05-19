@@ -9,7 +9,7 @@ export {
 } from './task';
 export { category } from './category';
 export { meeti, meetiLocations, meetiAttendees } from './meeti';
-// ─── NUEVO: Feature gestion_npl ──────────────────────────────────────────────
+// ─── Feature gestion_npl ─────────────────────────────────────────────────────
 export {
   npl,
   nplDeudores,
@@ -28,10 +28,14 @@ export {
   clienteFuenteEnum,
 } from './clientes';
 export type { ContactoItem } from './clientes';
-// ─── Feature documents (polimórfico) ────────────────────────────────────────
+// ─── Feature documents (polimórfico) ─────────────────────────────────────────
 export {
   document,
   documentEntityTypeEnum,
   documentCategoryEnum,
 } from './document';
 export type { DocumentEntityType, DocumentCategory } from './document';
+// ─── Feature fondos + carteras + operaciones ─────────────────────────────────
+export { fondos, carteras } from './fondos';
+export type { MapItem } from './fondos';
+export { operaciones } from './operaciones';

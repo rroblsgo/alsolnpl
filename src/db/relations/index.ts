@@ -106,4 +106,37 @@ export const relations = defineRelations(schema, (r) => ({
       optional: false,
     }),
   },
+  // ─── documents ───────────────────────────────────────────────────────────
+  fondos: {
+    carteras: r.many.carteras({
+      from: r.fondos.id,
+      to: r.carteras.fondoId,
+    }),
+    creator: r.one.users({
+      from: r.fondos.creatorId,
+      to: r.users.id,
+      optional: false,
+    }),
+  },
+  carteras: {
+    fondo: r.one.fondos({
+      from: r.carteras.fondoId,
+      to: r.fondos.id,
+      optional: false,
+    }),
+    operaciones: r.many.operaciones({
+      from: r.carteras.id,
+      to: r.operaciones.carteraId,
+    }),
+  },
+  operaciones: {
+    fondo: r.one.fondos({
+      from: r.operaciones.fondoId,
+      to: r.fondos.id,
+    }),
+    cartera: r.one.carteras({
+      from: r.operaciones.carteraId,
+      to: r.carteras.id,
+    }),
+  },
 }));

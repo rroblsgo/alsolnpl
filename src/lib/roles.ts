@@ -9,15 +9,15 @@
 
 export const ROLES = {
   // Usuarios internos — acceso a /dashboard
-  ADMIN:      'admin',
-  LEGAL:      'legal',
-  COMERCIAL:  'comercial',
-  VER_ONLY:   'ver_only',
+  ADMIN: 'admin',
+  LEGAL: 'legal',
+  COMERCIAL: 'comercial',
+  VER_ONLY: 'ver_only',
   // Usuarios externos — acceso a /npl
-  CLIENTE:    'cliente',
-  AGENTE:     'agente',
+  CLIENTE: 'cliente',
+  AGENTE: 'agente',
   // Fallback better-auth — sin acceso a ninguna zona protegida
-  USER:       'user',
+  USER: 'user',
 } as const;
 
 export type AppRole = (typeof ROLES)[keyof typeof ROLES];
@@ -45,10 +45,30 @@ export const NPL_ROLES: AppRole[] = [
   ROLES.AGENTE,
 ];
 
+/**
+ * Roles con acceso de LECTURA a operaciones de fondos/carteras.
+ * Todos los usuarios internos del dashboard.
+ */
+export const FONDOS_READ_ROLES: AppRole[] = [
+  ROLES.ADMIN,
+  ROLES.LEGAL,
+  ROLES.COMERCIAL,
+  ROLES.VER_ONLY,
+];
+
+/**
+ * Roles con acceso de ESCRITURA a fondos y carteras (crear, editar, eliminar).
+ * Solo administradores.
+ */
+export const FONDOS_WRITE_ROLES: AppRole[] = [ROLES.ADMIN];
+
 // ── Funciones de comprobación ─────────────────────────────────────────────────
 
 /** El usuario tiene alguno de los roles indicados */
-export function hasRole(userRole: string | null | undefined, roles: AppRole[]): boolean {
+export function hasRole(
+  userRole: string | null | undefined,
+  roles: AppRole[]
+): boolean {
   if (!userRole) return false;
   return roles.includes(userRole as AppRole);
 }
@@ -66,11 +86,11 @@ export function canAccessNpl(role: string | null | undefined): boolean {
 // ── Etiquetas legibles para UI ────────────────────────────────────────────────
 
 export const ROLE_LABELS: Record<AppRole, string> = {
-  admin:      'Administrador',
-  legal:      'Legal',
-  comercial:  'Comercial',
-  ver_only:   'Solo lectura',
-  cliente:    'Cliente',
-  agente:     'Agente',
-  user:       'Usuario',
+  admin: 'Administrador',
+  legal: 'Legal',
+  comercial: 'Comercial',
+  ver_only: 'Solo lectura',
+  cliente: 'Cliente',
+  agente: 'Agente',
+  user: 'Usuario',
 };
