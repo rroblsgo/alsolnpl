@@ -1,6 +1,7 @@
 'use server';
 
 import { requireRole } from '@/src/lib/auth-server';
+import { requireDashboard } from '@/src/lib/auth-server';
 import { ROLES } from '@/src/lib/roles';
 import { fondoService } from '../services/FondoService';
 import { operacionesRepository } from '../services/OperacionesRepository';
@@ -9,7 +10,6 @@ import { operaciones } from '@/src/db/schema/operaciones';
 import type { MapItem } from '@/src/db/schema/fondos';
 import type { InsertOperacion } from '@/src/db/schema/operaciones';
 
-// ─── Tipos por campo ──────────────────────────────────────────────────────────
 const NUMERIC_FIELDS = new Set([
   'deuda', 'precioVentaMercado', 'valorTasacionSubasta',
   'superficieConst', 'superficieUtil', 'superficieFinca', 'superficieRegistral',
@@ -17,12 +17,13 @@ const NUMERIC_FIELDS = new Set([
 ]);
 const INTEGER_FIELDS = new Set(['anyConstruccion']);
 const BOOLEAN_FIELDS = new Set(['esVpo']);
-const DATE_FIELDS    = new Set(['fechaAlta']);   // fechaTratamiento la ponemos nosotros
+const DATE_FIELDS    = new Set(['fechaAlta']);
 
 const VARCHAR_LIMITS: Record<string, number> = {
   assetManager: 100, oficinaResponsable: 100, expedienteId: 50, prestamoId: 50,
   nplReo: 20, deudorNombre: 100, rangoLienPrestamo: 10, propertyId: 50,
   propertyTipo: 100, propertyTipoOcupacion: 100, esVulnerable: 100,
+  comunidadAutonoma: 100,
   provincia: 50, municipio: 50, codPostal: 10, direccionCompleta: 255,
   referenciaCatastral: 25, idufir: 50, parcel: 20,
   libro: 50, tomo: 50, finca: 50, folio: 50,
@@ -31,15 +32,24 @@ const VARCHAR_LIMITS: Record<string, number> = {
   registroProvincia: 50, registroCiudad: 50, registroNumero: 50,
 };
 
+/** Construye la main_key de un registro */
+function buildMainKey(op: Record<string, unknown>): string | null {
+  const parts = [
+    String(op.expedienteId ?? op['expediente_id'] ?? '').trim(),
+    String(op.prestamoId   ?? op['prestamo_id']   ?? '').trim(),
+    String(op.propertyId   ?? op['property_id']   ?? '').trim(),
+  ];
+  // Si los tres están vacíos no generamos clave
+  if (parts.every(p => !p)) return null;
+  return parts.map(p => p || '_').join('|');
+}
+
 // ─── Consultar estado previo de una cartera ───────────────────────────────────
-export async function getCarteraOperacionesStatusAction(
-  carteraId: number
-): Promise<{ total: number; nuevos: number; otrosStatus: number; error: string }> {
+export async function getCarteraOperacionesStatusAction(carteraId: number) {
   await requireRole([ROLES.ADMIN]);
   try {
-    const cartera = await fondoService.getCartera(carteraId);
     const rows = await operacionesRepository.findByCartera(carteraId);
-    const nuevos = rows.filter((r) => r.statusTratamiento === 'nuevo').length;
+    const nuevos = rows.filter(r => r.statusTratamiento === 'nuevo').length;
     return { total: rows.length, nuevos, otrosStatus: rows.length - nuevos, error: '' };
   } catch (e) {
     return { total: 0, nuevos: 0, otrosStatus: 0, error: (e as Error).message };
@@ -47,9 +57,7 @@ export async function getCarteraOperacionesStatusAction(
 }
 
 // ─── Eliminar registros 'nuevo' de una cartera ────────────────────────────────
-export async function eliminarNuevosCarteraAction(
-  carteraId: number
-): Promise<{ eliminados: number; error: string }> {
+export async function eliminarNuevosCarteraAction(carteraId: number) {
   await requireRole([ROLES.ADMIN]);
   try {
     const eliminados = await operacionesRepository.deleteNuevosByCartera(carteraId);
@@ -59,10 +67,19 @@ export async function eliminarNuevosCarteraAction(
   }
 }
 
+// ─── Eliminar registros por IDs (selección múltiple) ─────────────────────────
+export async function deleteOperacionesAction(ids: number[]) {
+  await requireDashboard();
+  try {
+    const eliminados = await operacionesRepository.deleteByIds(ids);
+    return { eliminados, error: '' };
+  } catch (e) {
+    return { eliminados: 0, error: (e as Error).message };
+  }
+}
+
 // ─── Leer headers del Excel ───────────────────────────────────────────────────
-export async function getExcelHeadersAction(
-  carteraId: number
-): Promise<{ headers: string[]; error: string }> {
+export async function getExcelHeadersAction(carteraId: number) {
   await requireRole([ROLES.ADMIN]);
   const cartera = await fondoService.getCartera(carteraId);
   if (!cartera.excelUrl) return { headers: [], error: 'La cartera no tiene fichero Excel vinculado' };
@@ -77,29 +94,37 @@ export async function getExcelHeadersAction(
 // ─── Cargar operaciones ───────────────────────────────────────────────────────
 export async function cargarOperacionesAction(
   carteraId: number
-): Promise<{ insertadas: number; error: string }> {
+): Promise<{ insertadas: number; omitidas: number; error: string }> {
   await requireRole([ROLES.ADMIN]);
 
   const cartera = await fondoService.getCartera(carteraId);
-  if (!cartera.excelUrl) return { insertadas: 0, error: 'La cartera no tiene fichero Excel vinculado' };
+  if (!cartera.excelUrl)
+    return { insertadas: 0, omitidas: 0, error: 'La cartera no tiene fichero Excel vinculado' };
 
   const mapItems = (cartera.mapItems as MapItem[]) ?? [];
-  if (mapItems.length === 0) return { insertadas: 0, error: 'Define y guarda el mapeo antes de cargar' };
+  if (mapItems.length === 0)
+    return { insertadas: 0, omitidas: 0, error: 'Define y guarda el mapeo antes de cargar' };
 
   try {
     const buffer = await fetchExcelBuffer(cartera.excelUrl);
     const rows   = parseRows(buffer);
-    if (rows.length === 0) return { insertadas: 0, error: 'El fichero no contiene filas de datos' };
+    if (rows.length === 0)
+      return { insertadas: 0, omitidas: 0, error: 'El fichero no contiene filas de datos' };
 
     const colMap: Record<string, string> = {};
     for (const item of mapItems) {
       if (item.campo_operaciones) colMap[item.columna_name_origen] = snakeToCamel(item.campo_operaciones);
     }
 
-    // Fecha de hoy en formato ISO para fecha_tratamiento
     const hoy = new Date().toISOString().slice(0, 10);
 
-    const inserts: InsertOperacion[] = rows.map((row) => {
+    // main_keys ya existentes en toda la tabla
+    const existingKeys = await operacionesRepository.findExistingMainKeys();
+
+    const toInsert: InsertOperacion[] = [];
+    let omitidas = 0;
+
+    for (const row of rows) {
       const op: Record<string, unknown> = {
         fondoId:           cartera.fondoId,
         carteraId:         cartera.id,
@@ -112,30 +137,41 @@ export async function cargarOperacionesAction(
         const casted = castValue(campoCamel, raw);
         if (casted !== null) op[campoCamel] = casted;
       }
-      return op as InsertOperacion;
-    });
+
+      // Calcular y asignar main_key
+      const mainKey = buildMainKey(op);
+      if (mainKey) op.mainKey = mainKey;
+
+      // Deduplicar: si la clave ya existe, no insertar
+      if (mainKey && existingKeys.has(mainKey)) {
+        omitidas++;
+        continue;
+      }
+      if (mainKey) existingKeys.add(mainKey); // evita duplicados dentro del mismo Excel
+
+      toInsert.push(op as InsertOperacion);
+    }
 
     const BATCH = 100;
     let total = 0;
-    for (let i = 0; i < inserts.length; i += BATCH) {
-      await db.insert(operaciones).values(inserts.slice(i, i + BATCH));
-      total += inserts.slice(i, i + BATCH).length;
+    for (let i = 0; i < toInsert.length; i += BATCH) {
+      await db.insert(operaciones).values(toInsert.slice(i, i + BATCH));
+      total += toInsert.slice(i, i + BATCH).length;
     }
-    return { insertadas: total, error: '' };
+
+    return { insertadas: total, omitidas, error: '' };
   } catch (e) {
     const msg = (e as Error).message ?? String(e);
     console.error('[cargarOperaciones]', msg);
-    return { insertadas: 0, error: `Error en la carga: ${msg}` };
+    return { insertadas: 0, omitidas: 0, error: `Error en la carga: ${msg}` };
   }
 }
 
-// ─── Actualizar status y fecha de una operación ───────────────────────────────
+// ─── Actualizar status y fecha ────────────────────────────────────────────────
 export async function updateOperacionStatusAction(
-  id: number,
-  statusTratamiento: string,
-  fechaTratamiento: string
+  id: number, statusTratamiento: string, fechaTratamiento: string
 ): Promise<{ success: string; error: string }> {
-  // Cualquier usuario interno puede actualizar el status
+  await requireDashboard();
   const VALID = ['nuevo','analisis','scoring','seleccionado','descartado',
                  'comercializado','ofertado','reservado','vendido','cancelado'];
   if (!VALID.includes(statusTratamiento)) return { success: '', error: 'Status no válido' };
@@ -148,7 +184,6 @@ export async function updateOperacionStatusAction(
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-
 async function fetchExcelBuffer(url: string): Promise<Buffer> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`No se pudo descargar el Excel (HTTP ${res.status})`);

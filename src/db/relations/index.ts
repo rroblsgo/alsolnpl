@@ -106,7 +106,7 @@ export const relations = defineRelations(schema, (r) => ({
       optional: false,
     }),
   },
-  // ─── documents ───────────────────────────────────────────────────────────
+  // ─── fondos ───────────────────────────────────────────────────────────
   fondos: {
     carteras: r.many.carteras({
       from: r.fondos.id,

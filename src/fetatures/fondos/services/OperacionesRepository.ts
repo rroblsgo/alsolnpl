@@ -1,6 +1,6 @@
 import { db } from '@/src/db';
 import { operaciones } from '@/src/db/schema/operaciones';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, inArray } from 'drizzle-orm';
 import type { SelectOperacion, OperacionStatus } from '@/src/db/schema/operaciones';
 
 class OperacionesRepository {
@@ -21,6 +21,12 @@ class OperacionesRepository {
     return row;
   }
 
+  /** Devuelve el conjunto de main_key existentes (para deduplicar en carga) */
+  async findExistingMainKeys(): Promise<Set<string>> {
+    const rows = await db.select({ mainKey: operaciones.mainKey }).from(operaciones);
+    return new Set(rows.map(r => r.mainKey).filter(Boolean) as string[]);
+  }
+
   async countByCartera(carteraId: number): Promise<number> {
     const result = await db.select({ id: operaciones.id }).from(operaciones).where(eq(operaciones.carteraId, carteraId));
     return result.length;
@@ -35,11 +41,16 @@ class OperacionesRepository {
     return toDelete.length;
   }
 
+  async deleteByIds(ids: number[]): Promise<number> {
+    if (ids.length === 0) return 0;
+    await db.delete(operaciones).where(inArray(operaciones.id, ids));
+    return ids.length;
+  }
+
   async updateStatus(id: number, statusTratamiento: OperacionStatus, fechaTratamiento: string): Promise<SelectOperacion | undefined> {
     const [row] = await db.update(operaciones)
       .set({ statusTratamiento, fechaTratamiento })
-      .where(eq(operaciones.id, id))
-      .returning();
+      .where(eq(operaciones.id, id)).returning();
     return row;
   }
 

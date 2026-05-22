@@ -1,63 +1,43 @@
 import {
-  pgTable,
-  serial,
-  varchar,
-  integer,
-  numeric,
-  boolean,
-  date,
-  timestamp,
-  pgEnum,
+  pgTable, serial, varchar, integer, numeric,
+  boolean, date, timestamp, pgEnum,
 } from 'drizzle-orm/pg-core';
 import { fondos }   from './fondos';
 import { carteras } from './fondos';
 
-// ─── Enum status_tratamiento ──────────────────────────────────────────────────
 export const operacionStatusEnum = pgEnum('operacion_status', [
-  'nuevo',
-  'analisis',
-  'scoring',
-  'seleccionado',
-  'descartado',
-  'comercializado',
-  'ofertado',
-  'reservado',
-  'vendido',
-  'cancelado',
+  'nuevo', 'analisis', 'scoring', 'seleccionado', 'descartado',
+  'comercializado', 'ofertado', 'reservado', 'vendido', 'cancelado',
 ]);
 
 export const STATUS_LABELS: Record<string, string> = {
-  nuevo:           'Nuevo',
-  analisis:        'Análisis',
-  scoring:         'Scoring',
-  seleccionado:    'Seleccionado',
-  descartado:      'Descartado',
-  comercializado:  'Comercializado',
-  ofertado:        'Ofertado',
-  reservado:       'Reservado',
-  vendido:         'Vendido',
-  cancelado:       'Cancelado',
+  nuevo: 'Nuevo', analisis: 'Análisis', scoring: 'Scoring',
+  seleccionado: 'Seleccionado', descartado: 'Descartado',
+  comercializado: 'Comercializado', ofertado: 'Ofertado',
+  reservado: 'Reservado', vendido: 'Vendido', cancelado: 'Cancelado',
 };
 
 export const STATUS_COLORS: Record<string, string> = {
-  nuevo:           'bg-gray-100 text-gray-700',
-  analisis:        'bg-blue-100 text-blue-700',
-  scoring:         'bg-purple-100 text-purple-700',
-  seleccionado:    'bg-emerald-100 text-emerald-700',
-  descartado:      'bg-red-100 text-red-600',
-  comercializado:  'bg-amber-100 text-amber-700',
-  ofertado:        'bg-orange-100 text-orange-700',
-  reservado:       'bg-yellow-100 text-yellow-700',
-  vendido:         'bg-green-100 text-green-800',
-  cancelado:       'bg-slate-100 text-slate-500',
+  nuevo:          'bg-gray-100 text-gray-700',
+  analisis:       'bg-blue-100 text-blue-700',
+  scoring:        'bg-purple-100 text-purple-700',
+  seleccionado:   'bg-emerald-100 text-emerald-700',
+  descartado:     'bg-red-100 text-red-600',
+  comercializado: 'bg-amber-100 text-amber-700',
+  ofertado:       'bg-orange-100 text-orange-700',
+  reservado:      'bg-yellow-100 text-yellow-700',
+  vendido:        'bg-green-100 text-green-800',
+  cancelado:      'bg-slate-100 text-slate-500',
 };
 
-// ─── Tabla operaciones ────────────────────────────────────────────────────────
 export const operaciones = pgTable('operaciones', {
   id: serial('id').primaryKey(),
 
   fondoId:   integer('fondo_id').references(() => fondos.id,    { onDelete: 'set null' }),
   carteraId: integer('cartera_id').references(() => carteras.id, { onDelete: 'set null' }),
+
+  // Clave de negocio: expediente_id|prestamo_id|property_id
+  mainKey: varchar('main_key', { length: 160 }),
 
   assetManager:       varchar('asset_manager',        { length: 100 }),
   oficinaResponsable: varchar('oficina_responsable',  { length: 100 }),
@@ -78,6 +58,7 @@ export const operaciones = pgTable('operaciones', {
   esVpo:                 boolean('es_vpo'),
   esVulnerable:          varchar('es_vulnerable',           { length: 100 }),
 
+  comunidadAutonoma: varchar('comunidad_autonoma', { length: 100 }),
   provincia:         varchar('provincia',          { length: 50  }),
   municipio:         varchar('municipio',          { length: 50  }),
   codPostal:         varchar('cod_postal',         { length: 10  }),
@@ -109,17 +90,13 @@ export const operaciones = pgTable('operaciones', {
   registroCiudad:    varchar('registro_ciudad',    { length: 50 }),
   registroNumero:    varchar('registro_numero',    { length: 50 }),
 
-  // ── Estado y tratamiento ──────────────────────────────────────────────────
   statusTratamiento: operacionStatusEnum('status_tratamiento').notNull().default('nuevo'),
   fechaTratamiento:  date('fecha_tratamiento'),
 
   createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at')
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),
 });
 
-export type InsertOperacion  = typeof operaciones.$inferInsert;
-export type SelectOperacion  = typeof operaciones.$inferSelect;
-export type OperacionStatus  = typeof operacionStatusEnum.enumValues[number];
+export type InsertOperacion = typeof operaciones.$inferInsert;
+export type SelectOperacion = typeof operaciones.$inferSelect;
+export type OperacionStatus = typeof operacionStatusEnum.enumValues[number];

@@ -11,15 +11,16 @@ import {
 } from '@tanstack/react-table';
 import {
   ChevronUp, ChevronDown, ChevronsUpDown,
-  Search, SlidersHorizontal, X, MapPin, Loader2, GripVertical,
+  Search, SlidersHorizontal, X, MapPin, Loader2, GripVertical, Trash2,
 } from 'lucide-react';
 import type { SelectOperacion } from '@/src/db/schema/operaciones';
 import { STATUS_LABELS, STATUS_COLORS } from '@/src/db/schema/operaciones';
 import type { MapItem } from '@/src/db/schema/fondos';
 import { getCatastroDataAction, debugCatastroXmlAction } from '@/src/fetatures/gestion_npl/actions/catastro-actions';
+import { deleteOperacionesAction } from '../actions/excel-actions';
 import OperacionDetailModal from './OperacionDetailModal';
+import toast from 'react-hot-toast';
 
-// ─── Labels ───────────────────────────────────────────────────────────────────
 const FIELD_LABELS: Record<string, string> = {
   expedienteId: 'Expediente', prestamoId: 'Préstamo', nplReo: 'NPL/REO',
   deudorNombre: 'Deudor', fechaAlta: 'Fecha alta',
@@ -27,6 +28,7 @@ const FIELD_LABELS: Record<string, string> = {
   rangoLienPrestamo: 'Rango lien', valorTasacionSubasta: 'Tasación subasta (€)',
   propertyId: 'Inmueble ID', propertyTipo: 'Tipo inmueble',
   propertyTipoOcupacion: 'Ocupación', esVpo: 'VPO', esVulnerable: 'Vulnerable',
+  comunidadAutonoma: 'C. Autónoma',
   provincia: 'Provincia', municipio: 'Municipio', codPostal: 'C.P.',
   direccionCompleta: 'Dirección', referenciaCatastral: 'Ref. catastral',
   idufir: 'IDUFIR', parcel: 'Parcela',
@@ -71,7 +73,6 @@ function getPopulatedFields(rows: SelectOperacion[], mapItems: MapItem[]): strin
   });
 }
 
-// ─── Celda texto largo expandible ────────────────────────────────────────────
 function LongTextCell({ text }: { text: string }) {
   const [exp, setExp] = useState(false);
   if (text.length <= 28) return <span className="text-xs text-gray-700">{text}</span>;
@@ -85,7 +86,6 @@ function LongTextCell({ text }: { text: string }) {
   );
 }
 
-// ─── Celda referencia catastral ───────────────────────────────────────────────
 function CatastralCell({ rc }: { rc: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -128,7 +128,6 @@ function CatastralCell({ rc }: { rc: string }) {
   );
 }
 
-// ─── Filtro de columna ────────────────────────────────────────────────────────
 function ColumnFilter({ column, label }: {
   column: ReturnType<ReturnType<typeof useReactTable<SelectOperacion>>['getColumn']>;
   label: string;
@@ -150,7 +149,6 @@ function ColumnFilter({ column, label }: {
   );
 }
 
-// ─── Resize handle ────────────────────────────────────────────────────────────
 function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => void }) {
   return (
     <div onMouseDown={onMouseDown}
@@ -158,35 +156,23 @@ function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => v
   );
 }
 
-// ─── Panel de columnas con drag & drop ───────────────────────────────────────
-function ColumnsPanel({
-  allColumns,
-  columnOrder,
-  onOrderChange,
-}: {
+function ColumnsPanel({ allColumns, columnOrder, onOrderChange }: {
   allColumns: ReturnType<ReturnType<typeof useReactTable<SelectOperacion>>['getAllColumns']>;
   columnOrder: ColumnOrderState;
-  onOrderChange: (newOrder: ColumnOrderState) => void;
+  onOrderChange: (o: ColumnOrderState) => void;
 }) {
-  // Solo las columnas reordenables (excluye _id)
-  const draggableIds = columnOrder.filter(id => id !== '_id');
-
-  const dragItem   = useRef<string | null>(null);
+  const draggableIds = columnOrder.filter(id => id !== '_sel' && id !== '_id');
+  const dragItem     = useRef<string | null>(null);
   const dragOverItem = useRef<string | null>(null);
-
-  const handleDragStart = (id: string) => { dragItem.current = id; };
-
-  const handleDragEnter = (id: string) => { dragOverItem.current = id; };
 
   const handleDragEnd = () => {
     if (!dragItem.current || !dragOverItem.current || dragItem.current === dragOverItem.current) {
       dragItem.current = null; dragOverItem.current = null; return;
     }
     const newOrder = [...columnOrder];
-    const fromIdx = newOrder.indexOf(dragItem.current);
-    const toIdx   = newOrder.indexOf(dragOverItem.current);
-    newOrder.splice(fromIdx, 1);
-    newOrder.splice(toIdx, 0, dragItem.current);
+    const fi = newOrder.indexOf(dragItem.current);
+    const ti = newOrder.indexOf(dragOverItem.current);
+    newOrder.splice(fi, 1); newOrder.splice(ti, 0, dragItem.current);
     onOrderChange(newOrder);
     dragItem.current = null; dragOverItem.current = null;
   };
@@ -199,37 +185,29 @@ function ColumnsPanel({
         <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Columnas</p>
         <p className="text-[10px] text-gray-300">arrastra para reordenar</p>
       </div>
-
-      {/* ID fijo siempre arriba */}
-      <div className="mb-1 flex items-center gap-2 rounded px-1 py-1 bg-gray-50">
-        <span className="h-3.5 w-3.5 shrink-0" />
-        <input type="checkbox" checked className="h-3 w-3 rounded opacity-50" disabled />
-        <span className="text-xs text-gray-400">ID (fijo)</span>
-      </div>
-
+      {/* Fijas */}
+      {['_sel','_id'].map(id => (
+        <div key={id} className="mb-1 flex items-center gap-2 rounded px-1 py-1 bg-gray-50">
+          <span className="h-3.5 w-3.5 shrink-0" />
+          <input type="checkbox" checked className="h-3 w-3 rounded opacity-50" disabled />
+          <span className="text-xs text-gray-400">{id === '_sel' ? 'Sel. (fija)' : 'ID (fija)'}</span>
+        </div>
+      ))}
       <div className="max-h-72 overflow-y-auto space-y-0.5">
         {draggableIds.map(id => {
           const col = colMap[id];
           if (!col) return null;
           return (
-            <div
-              key={id}
-              draggable
-              onDragStart={() => handleDragStart(id)}
-              onDragEnter={() => handleDragEnter(id)}
+            <div key={id} draggable
+              onDragStart={() => { dragItem.current = id; }}
+              onDragEnter={() => { dragOverItem.current = id; }}
               onDragEnd={handleDragEnd}
               onDragOver={e => e.preventDefault()}
-              className="flex items-center gap-2 cursor-grab active:cursor-grabbing rounded px-1 py-1 hover:bg-gray-50 select-none group/drag"
-            >
+              className="flex items-center gap-2 cursor-grab active:cursor-grabbing rounded px-1 py-1 hover:bg-gray-50 select-none group/drag">
               <GripVertical className="h-3.5 w-3.5 shrink-0 text-gray-300 group-hover/drag:text-gray-400" />
               <label className="flex items-center gap-2 flex-1 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={col.getIsVisible()}
-                  onChange={col.getToggleVisibilityHandler()}
-                  onClick={e => e.stopPropagation()}
-                  className="h-3 w-3 rounded"
-                />
+                <input type="checkbox" checked={col.getIsVisible()} onChange={col.getToggleVisibilityHandler()}
+                  onClick={e => e.stopPropagation()} className="h-3 w-3 rounded" />
                 <span className="text-xs text-gray-700 truncate">{FIELD_LABELS[id] ?? id}</span>
               </label>
             </div>
@@ -240,7 +218,6 @@ function ColumnsPanel({
   );
 }
 
-// ─── Componente principal ─────────────────────────────────────────────────────
 type Props = { operaciones: SelectOperacion[]; mapItems: MapItem[]; carteraName: string };
 
 export default function OperacionesTable({ operaciones: initialRows, mapItems }: Props) {
@@ -254,29 +231,44 @@ export default function OperacionesTable({ operaciones: initialRows, mapItems }:
   const [showColPanel,  setShowColPanel] = useState(false);
   const [pageSize,      setPageSize]     = useState(25);
   const [modalRow,      setModalRow]     = useState<SelectOperacion | null>(null);
+  const [selected,      setSelected]     = useState<Set<number>>(new Set());
+  const [confirmDel,    setConfirmDel]   = useState(false);
+  const [deleting,      setDeleting]     = useState(false);
 
   const populatedFields = useMemo(() => getPopulatedFields(rows, mapItems), [rows, mapItems]);
 
-  // columnOrder: _id siempre primero, luego el resto en el orden actual
-  const [colOrder, setColOrder] = useState<ColumnOrderState>(() => [
-    '_id', ...populatedFields,
-  ]);
-
-  // Sincronizar colOrder cuando cambian los campos disponibles (primera carga)
+  const [colOrder, setColOrder] = useState<ColumnOrderState>(() => ['_sel', '_id', ...populatedFields]);
   const prevFields = useRef<string[]>([]);
-  if (prevFields.current.length === 0 && populatedFields.length > 0) {
-    prevFields.current = populatedFields;
-  }
+  if (prevFields.current.length === 0 && populatedFields.length > 0) prevFields.current = populatedFields;
 
   const defaultSize = (key: string) => {
     if (key === 'statusTratamiento') return 110;
+    if (key === 'comunidadAutonoma') return 130;
     if (NUMERIC_FIELDS.has(key)) return 120;
-    if (['direccionCompleta', 'procLegalCourt'].includes(key)) return 200;
-    if (['idufir', 'referenciaCatastral', 'expedienteId'].includes(key)) return 160;
+    if (['direccionCompleta','procLegalCourt'].includes(key)) return 200;
+    if (['idufir','referenciaCatastral','expedienteId'].includes(key)) return 160;
     return 130;
   };
 
+  // Columna de selección
+  const selColumn: ColumnDef<SelectOperacion> = {
+    id: '_sel', header: '',  size: 36,
+    enableSorting: false, enableColumnFilter: false, enableResizing: false,
+    cell: ({ row }) => (
+      <input type="checkbox" checked={selected.has(row.original.id)}
+        onChange={e => setSelected(prev => {
+          const next = new Set(prev);
+          e.target.checked ? next.add(row.original.id) : next.delete(row.original.id);
+          return next;
+        })}
+        className="h-3.5 w-3.5 rounded border-gray-300"
+        onClick={e => e.stopPropagation()}
+      />
+    ),
+  };
+
   const columns = useMemo<ColumnDef<SelectOperacion>[]>(() => [
+    selColumn,
     {
       id: '_id', header: 'ID', size: 56,
       enableSorting: true, enableColumnFilter: false, enableResizing: false,
@@ -314,43 +306,57 @@ export default function OperacionesTable({ operaciones: initialRows, mapItems }:
       },
     })),
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  ], [populatedFields]);
+  ], [populatedFields, selected]);
 
   const table = useReactTable({
     data: rows, columns,
     columnResizeMode: 'onChange',
     state: { sorting, globalFilter, columnFilters, columnVisibility: colVisibility, columnSizing: colSizing, columnOrder: colOrder },
-    onSortingChange: setSorting,
-    onGlobalFilterChange: setGlobalFilter,
-    onColumnFiltersChange: setColumnFilters,
-    onColumnVisibilityChange: setColVisibility,
-    onColumnSizingChange: setColSizing,
-    onColumnOrderChange: setColOrder,
-    getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getFacetedRowModel: getFacetedRowModel(),
-    getFacetedUniqueValues: getFacetedUniqueValues(),
+    onSortingChange: setSorting, onGlobalFilterChange: setGlobalFilter,
+    onColumnFiltersChange: setColumnFilters, onColumnVisibilityChange: setColVisibility,
+    onColumnSizingChange: setColSizing, onColumnOrderChange: setColOrder,
+    getCoreRowModel: getCoreRowModel(), getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(), getPaginationRowModel: getPaginationRowModel(),
+    getFacetedRowModel: getFacetedRowModel(), getFacetedUniqueValues: getFacetedUniqueValues(),
     initialState: { pagination: { pageSize } },
     globalFilterFn: 'includesString',
   });
 
+  // Seleccionar / deseleccionar todos los visibles
+  const visibleIds = table.getRowModel().rows.map(r => r.original.id);
+  const allVisibleSelected = visibleIds.length > 0 && visibleIds.every(id => selected.has(id));
+  const toggleSelectAll = () => {
+    if (allVisibleSelected) {
+      setSelected(prev => { const next = new Set(prev); visibleIds.forEach(id => next.delete(id)); return next; });
+    } else {
+      setSelected(prev => { const next = new Set(prev); visibleIds.forEach(id => next.add(id)); return next; });
+    }
+  };
+
+  // Eliminar seleccionados
+  const handleDeleteSelected = async () => {
+    setDeleting(true);
+    const ids = Array.from(selected);
+    const { eliminados, error } = await deleteOperacionesAction(ids);
+    setDeleting(false);
+    if (error) { toast.error(error); return; }
+    toast.success(`${eliminados} registro${eliminados !== 1 ? 's' : ''} eliminado${eliminados !== 1 ? 's' : ''}`);
+    setRows(prev => prev.filter(r => !selected.has(r.id)));
+    setSelected(new Set());
+    setConfirmDel(false);
+  };
+
   const handlePageSize = (n: number) => { setPageSize(n); table.setPageSize(n); };
   const activeFilters  = columnFilters.length;
   const filteredCount  = table.getFilteredRowModel().rows.length;
-  const filterableCols = table.getAllColumns().filter(c => c.id !== '_id' && !NUMERIC_FIELDS.has(c.id) && c.getCanFilter());
-
-  const handleOrderChange = (newOrder: ColumnOrderState) => {
-    setColOrder(newOrder);
-    table.setColumnOrder(newOrder);
-  };
+  const filterableCols = table.getAllColumns().filter(c => c.id !== '_sel' && c.id !== '_id' && !NUMERIC_FIELDS.has(c.id) && c.getCanFilter());
+  const handleOrderChange = (newOrder: ColumnOrderState) => { setColOrder(newOrder); table.setColumnOrder(newOrder); };
 
   return (
     <>
       <div className="space-y-3">
 
-        {/* ── Toolbar ────────────────────────────────────────────────────── */}
+        {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px] max-w-sm">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
@@ -371,36 +377,52 @@ export default function OperacionesTable({ operaciones: initialRows, mapItems }:
             </button>
           )}
 
+          {/* Eliminación múltiple */}
+          {selected.size > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-medium text-gray-600">{selected.size} seleccionado{selected.size !== 1 ? 's' : ''}</span>
+              {!confirmDel ? (
+                <button onClick={() => setConfirmDel(true)}
+                  className="flex items-center gap-1.5 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700">
+                  <Trash2 className="h-3.5 w-3.5" /> Eliminar
+                </button>
+              ) : (
+                <>
+                  <span className="text-xs text-red-600 font-medium">¿Confirmas?</span>
+                  <button onClick={handleDeleteSelected} disabled={deleting}
+                    className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 disabled:opacity-50">
+                    {deleting ? '...' : 'Sí'}
+                  </button>
+                  <button onClick={() => setConfirmDel(false)}
+                    className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">
+                    No
+                  </button>
+                </>
+              )}
+              <button onClick={() => { setSelected(new Set()); setConfirmDel(false); }}
+                className="text-xs text-gray-400 hover:text-gray-600">Deseleccionar</button>
+            </div>
+          )}
+
           <span className="ml-auto text-xs text-gray-400">
             {filteredCount < rows.length ? `${filteredCount} de ${rows.length}` : `${rows.length} registros`}
           </span>
 
-          {/* Botón Columnas — abre/cierra el panel */}
           <div className="relative">
-            <button
-              onClick={() => setShowColPanel(!showColPanel)}
-              className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${showColPanel ? 'border-blue-400 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-600 hover:bg-gray-50'}`}
-            >
-              Columnas ({table.getVisibleLeafColumns().length - 1})
+            <button onClick={() => setShowColPanel(!showColPanel)}
+              className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${showColPanel ? 'border-blue-400 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-600 hover:bg-gray-50'}`}>
+              Columnas ({table.getVisibleLeafColumns().filter(c => c.id !== '_sel').length - 1})
             </button>
-            {showColPanel && (
-              <ColumnsPanel
-                allColumns={table.getAllColumns()}
-                columnOrder={colOrder}
-                onOrderChange={handleOrderChange}
-              />
-            )}
+            {showColPanel && <ColumnsPanel allColumns={table.getAllColumns()} columnOrder={colOrder} onOrderChange={handleOrderChange} />}
           </div>
 
-          {(Object.keys(colSizing).length > 0 || colOrder.join() !== ['_id', ...populatedFields].join()) && (
-            <button onClick={() => { setColSizing({}); setColOrder(['_id', ...populatedFields]); }}
-              className="text-xs text-gray-400 hover:text-gray-600">
-              Reset
-            </button>
+          {(Object.keys(colSizing).length > 0 || colOrder.join() !== ['_sel','_id',...populatedFields].join()) && (
+            <button onClick={() => { setColSizing({}); setColOrder(['_sel','_id',...populatedFields]); }}
+              className="text-xs text-gray-400 hover:text-gray-600">Reset</button>
           )}
         </div>
 
-        {/* ── Filtros ─────────────────────────────────────────────────────── */}
+        {/* Filtros */}
         {showFilters && (
           <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
             <div className="flex flex-wrap gap-4">
@@ -409,7 +431,7 @@ export default function OperacionesTable({ operaciones: initialRows, mapItems }:
           </div>
         )}
 
-        {/* ── Leyenda ─────────────────────────────────────────────────────── */}
+        {/* Leyenda */}
         <p className="text-[11px] text-gray-400">
           <span className="font-medium text-blue-500">ID</span> → ver detalle y actualizar status
           {populatedFields.includes('referenciaCatastral') && (
@@ -417,7 +439,7 @@ export default function OperacionesTable({ operaciones: initialRows, mapItems }:
           )}
         </p>
 
-        {/* ── Tabla ───────────────────────────────────────────────────────── */}
+        {/* Tabla */}
         <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
           <table style={{ width: table.getTotalSize() }} className="divide-y divide-gray-100 text-xs">
             <thead className="bg-gray-50 sticky top-0 z-10">
@@ -426,22 +448,28 @@ export default function OperacionesTable({ operaciones: initialRows, mapItems }:
                   {hg.headers.map(header => {
                     const sorted = header.column.getIsSorted();
                     const canSort = header.column.getCanSort();
+                    const isSel = header.column.id === '_sel';
                     const isCatastral = header.column.id === 'referenciaCatastral';
                     return (
                       <th key={header.id} style={{ width: header.getSize(), position: 'relative' }}
                         className={`group/th px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-500 whitespace-nowrap select-none ${canSort ? 'cursor-pointer hover:bg-gray-100' : ''} ${sorted ? 'bg-blue-50 text-blue-700' : ''}`}
                         onClick={canSort ? header.column.getToggleSortingHandler() : undefined}>
-                        <div className="flex items-center gap-1">
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                          {isCatastral && <span title="Click → Maps | Ctrl+Click → XML"><MapPin className="h-3 w-3 text-blue-400" /></span>}
-                          {canSort && (
-                            <span className="text-gray-300">
-                              {sorted === 'asc' ? <ChevronUp className="h-3 w-3 text-blue-600" /> :
-                               sorted === 'desc' ? <ChevronDown className="h-3 w-3 text-blue-600" /> :
-                               <ChevronsUpDown className="h-3 w-3" />}
-                            </span>
-                          )}
-                        </div>
+                        {isSel ? (
+                          <input type="checkbox" checked={allVisibleSelected} onChange={toggleSelectAll}
+                            className="h-3.5 w-3.5 rounded border-gray-300" title="Seleccionar todos" />
+                        ) : (
+                          <div className="flex items-center gap-1">
+                            {flexRender(header.column.columnDef.header, header.getContext())}
+                            {isCatastral && <span title="Click → Maps | Ctrl+Click → XML"><MapPin className="h-3 w-3 text-blue-400" /></span>}
+                            {canSort && (
+                              <span className="text-gray-300">
+                                {sorted === 'asc' ? <ChevronUp className="h-3 w-3 text-blue-600" /> :
+                                 sorted === 'desc' ? <ChevronDown className="h-3 w-3 text-blue-600" /> :
+                                 <ChevronsUpDown className="h-3 w-3" />}
+                              </span>
+                            )}
+                          </div>
+                        )}
                         {header.column.getCanResize() && <ResizeHandle onMouseDown={header.getResizeHandler() as (e: React.MouseEvent) => void} />}
                       </th>
                     );
@@ -451,10 +479,11 @@ export default function OperacionesTable({ operaciones: initialRows, mapItems }:
             </thead>
             <tbody className="divide-y divide-gray-50">
               {table.getRowModel().rows.length === 0 ? (
-                <tr><td colSpan={columns.length} className="py-12 text-center text-sm text-gray-400">Sin registros que coincidan</td></tr>
+                <tr><td colSpan={columns.length} className="py-12 text-center text-sm text-gray-400">Sin registros</td></tr>
               ) : (
                 table.getRowModel().rows.map(row => (
-                  <tr key={row.id} className="hover:bg-blue-50/30 transition-colors">
+                  <tr key={row.id}
+                    className={`hover:bg-blue-50/30 transition-colors ${selected.has(row.original.id) ? 'bg-blue-50' : ''}`}>
                     {row.getVisibleCells().map(cell => (
                       <td key={cell.id} style={{ width: cell.column.getSize() }} className="px-3 py-2">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -467,15 +496,13 @@ export default function OperacionesTable({ operaciones: initialRows, mapItems }:
           </table>
         </div>
 
-        {/* ── Paginación ──────────────────────────────────────────────────── */}
+        {/* Paginación */}
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5">
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <span>Filas:</span>
-            {[10, 25, 50, 100].map(n => (
+            {[10,25,50,100].map(n => (
               <button key={n} onClick={() => handlePageSize(n)}
-                className={`rounded px-2 py-0.5 font-medium transition-colors ${pageSize === n ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
-                {n}
-              </button>
+                className={`rounded px-2 py-0.5 font-medium transition-colors ${pageSize === n ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{n}</button>
             ))}
           </div>
           <span className="text-xs text-gray-500">Pág. {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}</span>
@@ -487,23 +514,19 @@ export default function OperacionesTable({ operaciones: initialRows, mapItems }:
               { l: '»', f: () => table.setPageIndex(table.getPageCount() - 1), d: !table.getCanNextPage()     },
             ].map(({ l, f, d }) => (
               <button key={l} onClick={f} disabled={d}
-                className="rounded px-2.5 py-1 text-sm font-medium text-gray-600 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30">
-                {l}
-              </button>
+                className="rounded px-2.5 py-1 text-sm font-medium text-gray-600 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-30">{l}</button>
             ))}
           </div>
         </div>
       </div>
 
-      {/* ── Modal detalle ────────────────────────────────────────────────── */}
+      {/* Modal */}
       {modalRow && (
         <OperacionDetailModal
           operacion={modalRow}
           onClose={() => setModalRow(null)}
-          onUpdated={updated => {
-            setRows(prev => prev.map(r => r.id === updated.id ? updated : r));
-            setModalRow(null);
-          }}
+          onUpdated={updated => { setRows(prev => prev.map(r => r.id === updated.id ? updated : r)); setModalRow(null); }}
+          onDeleted={id => { setRows(prev => prev.filter(r => r.id !== id)); setSelected(prev => { const n = new Set(prev); n.delete(id); return n; }); setModalRow(null); }}
         />
       )}
     </>
