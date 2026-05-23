@@ -440,7 +440,7 @@ export default function OperacionesTable({ operaciones: initialRows, mapItems }:
         </p>
 
         {/* Tabla */}
-        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="overflow-x-auto overflow-y-auto max-h-[70vh] rounded-xl border border-gray-200 bg-white shadow-sm">
           <table style={{ width: table.getTotalSize() }} className="divide-y divide-gray-100 text-xs">
             <thead className="bg-gray-50 sticky top-0 z-10">
               {table.getHeaderGroups().map(hg => (
