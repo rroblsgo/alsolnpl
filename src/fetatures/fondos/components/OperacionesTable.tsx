@@ -56,11 +56,21 @@ function fmtNumber(val: unknown): string {
   const n = parseFloat(String(val));
   return isNaN(n) ? String(val) : n.toLocaleString('es-ES', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 }
+// Campos que se muestran siempre capitalizados
+const CAPITALIZE_FIELDS = new Set(['comunidadAutonoma', 'provincia', 'municipio']);
+
+function capitalize(s: string): string {
+  if (!s) return s;
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
 function fmtCell(key: string, val: unknown): string {
   if (val === null || val === undefined || val === '') return '—';
   if (typeof val === 'boolean') return val ? 'Sí' : 'No';
   if (NUMERIC_FIELDS.has(key)) return fmtNumber(val);
-  return String(val);
+  const str = String(val);
+  if (CAPITALIZE_FIELDS.has(key)) return capitalize(str);
+  return str;
 }
 function snakeToCamel(s: string) { return s.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase()); }
 
@@ -132,18 +142,40 @@ function ColumnFilter({ column, label }: {
   column: ReturnType<ReturnType<typeof useReactTable<SelectOperacion>>['getColumn']>;
   label: string;
 }) {
-  const uniqueValues = Array.from(column?.getFacetedUniqueValues?.() ?? new Map())
-    .map(([v]) => v).filter(v => v !== null && v !== undefined && v !== '')
-    .sort((a, b) => String(a).localeCompare(String(b), 'es'));
+  const isCapitalize = CAPITALIZE_FIELDS.has(column?.id ?? '');
+
+  // Deduplicar variantes de capitalización: 'madrid', 'Madrid', 'MADRID' → 'Madrid'
+  const rawValues = Array.from(column?.getFacetedUniqueValues?.() ?? new Map())
+    .map(([v]) => v).filter(v => v !== null && v !== undefined && v !== '');
+  const seen = new Map<string, string>(); // normalizado -> valor display
+  for (const v of rawValues) {
+    const display = isCapitalize ? capitalize(String(v)) : String(v);
+    const key = display.toLowerCase();
+    if (!seen.has(key)) seen.set(key, display);
+  }
+  const uniqueValues = Array.from(seen.values()).sort((a, b) => a.localeCompare(b, 'es'));
+
   const current = (column?.getFilterValue() as string) ?? '';
   if (uniqueValues.length <= 1) return null;
+
+  // El filtro compara en minúsculas para ser case-insensitive
+  const handleChange = (display: string) => {
+    if (!display) { column?.setFilterValue(undefined); return; }
+    if (isCapitalize) {
+      // Filtra todas las variantes que normalicen al mismo valor
+      column?.setFilterValue(display);
+    } else {
+      column?.setFilterValue(display);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-1">
       <span className="text-xs font-medium text-gray-500">{label}</span>
-      <select value={current} onChange={e => column?.setFilterValue(e.target.value || undefined)}
+      <select value={current} onChange={e => handleChange(e.target.value)}
         className="rounded border border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:outline-none">
         <option value="">Todos</option>
-        {uniqueValues.map(v => <option key={String(v)} value={String(v)}>{STATUS_LABELS[String(v)] ?? fmtCell('', v)}</option>)}
+        {uniqueValues.map(v => <option key={v} value={v}>{STATUS_LABELS[v] ?? v}</option>)}
       </select>
     </div>
   );
@@ -287,6 +319,12 @@ export default function OperacionesTable({ operaciones: initialRows, mapItems }:
       header: FIELD_LABELS[key] ?? key,
       size: defaultSize(key), minSize: 60, maxSize: 600,
       enableResizing: true, enableSorting: true, enableColumnFilter: true,
+      filterFn: CAPITALIZE_FIELDS.has(key)
+        ? (row, columnId, filterValue) => {
+            const val = (row.getValue(columnId) as string) ?? '';
+            return capitalize(val).toLowerCase() === String(filterValue).toLowerCase();
+          }
+        : 'includesString',
       cell: ({ getValue }) => {
         const val = getValue();
         if (key === 'statusTratamiento') {
