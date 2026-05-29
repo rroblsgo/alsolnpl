@@ -10,12 +10,17 @@ class TaskService {
   constructor(private taskRepository: ITaskRepository) {}
 
   async getTaskFormOptions(): Promise<TaskFormOptions> {
-    const [clientes, users, npls] = await Promise.all([
+    const [clientes, users, npls, enrichments] = await Promise.all([
       this.taskRepository.listClienteOptions(),
       this.taskRepository.listUserOptions(),
       this.taskRepository.listNplOptions(),
+      this.taskRepository.listEnrichmentOptions(),
     ]);
-    return { clientes, users, npls };
+    return { clientes, users, npls, enrichments };
+  }
+
+  async listTasksByEnrichment(enrichmentId: number) {
+    return this.taskRepository.listByEnrichment(enrichmentId);
   }
 
   async createTask(data: TaskInput, creatorId: string) {

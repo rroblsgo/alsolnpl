@@ -17,23 +17,28 @@ import TaskItem from './TaskItem';
 
 const PAGE_SIZE = 10;
 
-type NplOption     = { id: number; tituloOperacion: string };
-type ClienteOption = { id: number; nombre: string };
+type NplOption        = { id: number; tituloOperacion: string };
+type ClienteOption    = { id: number; nombre: string };
+type EnrichmentOption = { id: number; expedienteId: string | null; mainKey: string | null };
 
 type Props = {
   tasks: TaskListItem[];
   nplOptions?: NplOption[];
   clienteOptions?: ClienteOption[];
+  enrichmentOptions?: EnrichmentOption[];
   fixedNplId?: number;
   fixedClienteId?: number;
+  fixedEnrichmentId?: number;
 };
 
 export default function TaskList({
   tasks,
   nplOptions = [],
   clienteOptions = [],
+  enrichmentOptions = [],
   fixedNplId,
   fixedClienteId,
+  fixedEnrichmentId,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -60,6 +65,9 @@ export default function TaskList({
   const filterCliente = fixedClienteId
     ? String(fixedClienteId)
     : (searchParams.get('cliente') ?? 'ALL');
+  const filterEnrichment = fixedEnrichmentId
+    ? String(fixedEnrichmentId)
+    : (searchParams.get('enrichment') ?? 'ALL');
   const dateFrom      = searchParams.get('desde')    ?? '';
   const dateTo        = searchParams.get('hasta')    ?? '';
   const filterCreator  = searchParams.get('creator')  ?? 'ALL';
@@ -110,6 +118,11 @@ export default function TaskList({
       else if (filterCliente === 'WITHOUT_CLIENTE') matchCliente = t.clienteId === null;
       else if (filterCliente !== 'ALL')             matchCliente = t.clienteId === Number(filterCliente);
 
+      let matchEnrichment = true;
+      if      (filterEnrichment === 'WITH_ENRICHMENT')    matchEnrichment = t.enrichmentId !== null;
+      else if (filterEnrichment === 'WITHOUT_ENRICHMENT') matchEnrichment = t.enrichmentId === null;
+      else if (filterEnrichment !== 'ALL')                matchEnrichment = t.enrichmentId === Number(filterEnrichment);
+
       const fp = t.fechaPropuesta ? new Date(t.fechaPropuesta) : null;
       const matchDateFrom = !from || (fp !== null && fp >= from);
       const matchDateTo   = !to   || (fp !== null && fp <= to);
@@ -119,12 +132,12 @@ export default function TaskList({
 
       return (
         matchSearch && matchStatus && matchPriority &&
-        matchNpl && matchCliente &&
+        matchNpl && matchCliente && matchEnrichment &&
         matchDateFrom && matchDateTo &&
         matchCreator && matchAssignee
       );
     });
-  }, [tasks, search, filterStatus, filterPriority, filterNpl, filterCliente,
+  }, [tasks, search, filterStatus, filterPriority, filterNpl, filterCliente, filterEnrichment,
       dateFrom, dateTo, filterCreator, filterAssignee]);
 
   // ── Listas únicas de usuarios ───────────────────────────────────────────
@@ -228,6 +241,24 @@ export default function TaskList({
                 <optgroup label="── Cliente específico ──">
                   {clienteOptions.map((c) => (
                     <option key={c.id} value={String(c.id)}>{c.nombre}</option>
+                  ))}
+                </optgroup>
+              )}
+            </select>
+          )}
+
+          {/* Filtro Enrichment */}
+          {!fixedEnrichmentId && (
+            <select value={filterEnrichment} onChange={handleChange('enrichment')} className={selectClass}>
+              <option value="ALL">Con o sin enrichment</option>
+              <option value="WITH_ENRICHMENT">Con enrichment vinculado</option>
+              <option value="WITHOUT_ENRICHMENT">Sin enrichment</option>
+              {enrichmentOptions.length > 0 && (
+                <optgroup label="── Enrichment específico ──">
+                  {enrichmentOptions.map((e) => (
+                    <option key={e.id} value={String(e.id)}>
+                      {e.expedienteId ?? e.mainKey ?? `Enrichment #${e.id}`}
+                    </option>
                   ))}
                 </optgroup>
               )}

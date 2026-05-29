@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
 import type { Route } from 'next';
-import { Building2, User, Briefcase, Calendar, Tag, Clock, UserCircle } from 'lucide-react';
+import { Building2, User, Briefcase, Calendar, Tag, Clock, UserCircle, Sparkles } from 'lucide-react';
 import { TaskListItem, TASK_CATEGORY_LABELS } from '../types/task.types';
 import TaskPriorityBadge from './TaskPriorityBadge';
 import TaskStatusBadge from './TaskStatusBadge';
@@ -82,6 +82,23 @@ export default function TaskItem({ task }: Props) {
                   title={task.clienteNombre}
                 >
                   {task.clienteNombre}
+                </Link>
+              </div>
+            )}
+
+            {/* Enrichment vinculado */}
+            {task.enrichmentId && task.operacionId && (
+              <div className="flex items-center gap-1.5">
+                <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2.5 py-0.5 text-xs font-semibold text-teal-700 ring-1 ring-teal-600/20 ring-inset">
+                  <Sparkles className="h-3 w-3" />
+                  Enrichment
+                </span>
+                <Link
+                  href={`/dashboard/operaciones/${task.operacionId}/enrichment`}
+                  className="text-xs text-teal-600 hover:underline truncate max-w-[260px]"
+                  title={task.expedienteRef ?? `Enrichment #${task.enrichmentId}`}
+                >
+                  {task.expedienteRef ?? `Enrichment #${task.enrichmentId}`}
                 </Link>
               </div>
             )}

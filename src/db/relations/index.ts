@@ -138,5 +138,77 @@ export const relations = defineRelations(schema, (r) => ({
       from: r.operaciones.carteraId,
       to: r.carteras.id,
     }),
+    enrichment: r.one.operacionEnrichments({
+      from: r.operaciones.id,
+      to: r.operacionEnrichments.operacionId,
+    }),
+  },
+
+  // ─── enrichment ──────────────────────────────────────────────────────────
+  operacionEnrichments: {
+    operacion: r.one.operaciones({
+      from: r.operacionEnrichments.operacionId,
+      to: r.operaciones.id,
+      optional: false,
+    }),
+    sources: r.many.enrichmentSources({
+      from: r.operacionEnrichments.id,
+      to: r.enrichmentSources.enrichmentId,
+    }),
+    deudores: r.many.enrichmentDeudores({
+      from: r.operacionEnrichments.id,
+      to: r.enrichmentDeudores.enrichmentId,
+    }),
+    creator: r.one.users({
+      from: r.operacionEnrichments.creatorId,
+      to: r.users.id,
+      optional: false,
+    }),
+  },
+  enrichmentSources: {
+    enrichment: r.one.operacionEnrichments({
+      from: r.enrichmentSources.enrichmentId,
+      to: r.operacionEnrichments.id,
+      optional: false,
+    }),
+  },
+
+  // ─── enrichment_deudores ─────────────────────────────────────────────────
+  enrichmentDeudores: {
+    enrichment: r.one.operacionEnrichments({
+      from: r.enrichmentDeudores.enrichmentId,
+      to: r.operacionEnrichments.id,
+      optional: false,
+    }),
+  },
+
+  // ─── tasks ───────────────────────────────────────────────────────────────
+  task: {
+    npl: r.one.npl({
+      from: r.task.nplId,
+      to: r.npl.id,
+    }),
+    cliente: r.one.clientes({
+      from: r.task.clienteId,
+      to: r.clientes.id,
+    }),
+    operacion: r.one.operaciones({
+      from: r.task.operacionId,
+      to: r.operaciones.id,
+    }),
+    enrichment: r.one.operacionEnrichments({
+      from: r.task.enrichmentId,
+      to: r.operacionEnrichments.id,
+    }),
+    creator: r.one.users({
+      from: r.task.creatorId,
+      to: r.users.id,
+      optional: false,
+    }),
+    assignee: r.one.users({
+      from: r.task.assigneeId,
+      to: r.users.id,
+      optional: false,
+    }),
   },
 }));

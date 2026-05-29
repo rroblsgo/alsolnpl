@@ -4,48 +4,53 @@ import { taskCategoryEnum, taskPriorityEnum, taskStatusEnum } from '@/src/db/sch
 export type InsertTask = typeof task.$inferInsert;
 export type SelectTask = typeof task.$inferSelect;
 
-export type TaskStatus = (typeof taskStatusEnum.enumValues)[number];
+export type TaskStatus   = (typeof taskStatusEnum.enumValues)[number];
 export type TaskPriority = (typeof taskPriorityEnum.enumValues)[number];
 export type TaskCategory = (typeof taskCategoryEnum.enumValues)[number];
 
-export const TASK_STATUSES = [...taskStatusEnum.enumValues] as const;
+export const TASK_STATUSES   = [...taskStatusEnum.enumValues]   as const;
 export const TASK_PRIORITIES = [...taskPriorityEnum.enumValues] as const;
 export const TASK_CATEGORIES = [...taskCategoryEnum.enumValues] as const;
 
 export const TASK_STATUS_LABELS: Record<TaskStatus, string> = {
-  PENDIENTE: 'Pendiente',
-  EN_CURSO: 'En curso',
+  PENDIENTE:  'Pendiente',
+  EN_CURSO:   'En curso',
   COMPLETADA: 'Completada',
-  BLOQUEADA: 'Bloqueada',
-  CANCELADA: 'Cancelada',
+  BLOQUEADA:  'Bloqueada',
+  CANCELADA:  'Cancelada',
 };
 
 export const TASK_PRIORITY_LABELS: Record<TaskPriority, string> = {
-  ALTA: 'Alta',
+  ALTA:  'Alta',
   MEDIA: 'Media',
-  BAJA: 'Baja',
+  BAJA:  'Baja',
 };
 
 export const TASK_CATEGORY_LABELS: Record<TaskCategory, string> = {
-  DUE_DILIGENCE: 'Due diligence',
-  LEGAL: 'Legal',
-  VALORACION: 'Valoración',
-  NEGOCIACION: 'Negociación',
-  CATASTRO: 'Catastro',
-  SUBASTA: 'Subasta',
+  DUE_DILIGENCE:  'Due diligence',
+  LEGAL:          'Legal',
+  VALORACION:     'Valoración',
+  NEGOCIACION:    'Negociación',
+  CATASTRO:       'Catastro',
+  SUBASTA:        'Subasta',
   ADMINISTRATIVO: 'Administrativo',
-  OTRO: 'Otro',
+  OTRO:           'Otro',
 };
 
 export type TaskListItem = SelectTask & {
-  clienteNombre: string | null;  // sustituye a communityName
-  creatorName: string;
-  assigneeName: string;
-  nplTitulo: string | null;
+  clienteNombre:  string | null;
+  creatorName:    string;
+  assigneeName:   string;
+  nplTitulo:      string | null;
+  // ← Sprint 4: nuevos campos de contexto enrichment
+  enrichmentId:   number | null;
+  operacionId:    number | null;
+  expedienteRef:  string | null;  // expedienteId de la operación vinculada
 };
 
 export type TaskFormOptions = {
-  clientes: Array<{ id: number; nombre: string }>;  // sustituye a communities
-  users: Array<{ id: string; name: string; email: string }>;
-  npls: Array<{ id: number; tituloOperacion: string }>;
+  clientes:     Array<{ id: number; nombre: string }>;
+  users:        Array<{ id: string; name: string; email: string }>;
+  npls:         Array<{ id: number; tituloOperacion: string }>;
+  enrichments?: Array<{ id: number; expedienteId: string | null; mainKey: string | null }>;
 };

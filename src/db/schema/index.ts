@@ -39,3 +39,24 @@ export type { DocumentEntityType, DocumentCategory } from './document';
 export { fondos, carteras } from './fondos';
 export type { MapItem } from './fondos';
 export { operaciones } from './operaciones';
+
+// ─── Feature enrichment ───────────────────────────────────────────────────────
+export {
+  operacionEnrichments,
+  enrichmentSources,
+  enrichmentFuenteEnum,
+} from './enrichment';
+export type {
+  InsertEnrichment,
+  SelectEnrichment,
+  InsertEnrichmentSource,
+  SelectEnrichmentSource,
+  EnrichmentFuente,
+  SeccionesCompletadas,
+} from './enrichment';
+
+export { enrichmentDeudores } from './enrichment_deudores';
+export type {
+  InsertEnrichmentDeudor,
+  SelectEnrichmentDeudor,
+} from './enrichment_deudores';

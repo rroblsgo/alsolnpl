@@ -39,6 +39,7 @@ export default async function TasksPage() {
           tasks={tasks}
           nplOptions={options.npls}
           clienteOptions={options.clientes}
+          enrichmentOptions={options.enrichments ?? []}
         />
       </Suspense>
     </>

@@ -75,6 +75,17 @@ export const ourFileRouter = {
       console.log('file url', file.ufsUrl);
       return { uploadedBy: metadata.userId, name: file.name, size: file.size };
     }),
+
+  // ─── Enrichment: nota simple PDF ─────────────────────────────────────────
+  notaSimpleUploader: f({ pdf: { maxFileSize: '16MB', maxFileCount: 1 } })
+    .middleware(async ({ req }) => {
+      const { session } = await requireAuth();
+      if (!session) throw new UploadThingError('Unauthorized');
+      return { userId: session.user.id };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      return { uploadedBy: metadata.userId, name: file.name, url: file.ufsUrl };
+    }),
 } satisfies FileRouter;
 
 export type OurFileRouter = typeof ourFileRouter;
