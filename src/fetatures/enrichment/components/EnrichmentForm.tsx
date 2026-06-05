@@ -28,6 +28,7 @@ type Props = {
   initialDeudores: SelectEnrichmentDeudor[];
   users:           { id: string; name: string; email: string }[];
   currentUserId:   string;
+  notasTratamiento?: string | null;
 };
 
 function asEnum<T>(val: string | null | undefined): T | undefined {
@@ -35,43 +36,48 @@ function asEnum<T>(val: string | null | undefined): T | undefined {
 }
 
 const SECCION_CAMPOS: Record<SeccionId, (keyof EnrichmentFormValues)[]> = {
-  a: ['sellerReference', 'originalLender', 'idufir', 'cru'],
+  a: ['tituloOperacion', 'sellerReference', 'originalLender', 'idufir', 'cru'],
   b: [
-    'fechaOriginacion', 'fechaImpago', 'fechaClasificacionNpl', 'fechaUltimoPago',
+    'fechaOriginacion', 'fechaClasificacionNpl',
     'fechaVencimiento', 'fechaCompraCartera', 'fechaInicioAccionLegal',
-    'principalOriginal', 'principalPendiente', 'interesesDevengados', 'deudaTotal',
-    'gbv', 'tipoInteres', 'cuotaMensual', 'ltv', 'mesesImpago',
-    'tasacionOriginal', 'tasacionActual', 'fechaTasacion', 'valorMercado',
-    'valorEjecucionForzosa', 'precioSubasta', 'precioVenta',
+    'principalOriginal',
+    'principalAFS', 'interesesAFS', 'costasAFS', 'fechaAFS',
+    'intereses', 'costas', 'fechaCalculada',
+    'tasacionOriginal', 'tasacionActual', 'fechaTasacion',
+    'prestamoHipotecaDetalles',
   ],
   c: [
     'propertyId', 'tipoInmueble',
     'comunidadAutonoma', 'provincia', 'municipio', 'municipioId', 'codPostal',
-    'tipoVia', 'nombreVia', 'numero', 'bloque', 'planta', 'puerta',
+    'nombreVia', 'numero', 'bloque', 'planta', 'puerta',
     'latitud', 'longitud',
     'referenciaCatastral', 'usoCatastral', 'valorRefCatastral', 'valorCatastral',
-    'superficieConst', 'superficieUtil', 'superficieParcela', 'zonasComunes',
+    'superficieConst', 'superficieUtil', 'superficieParcela',
+    'superficieDetalles', 'distribucionResumida', 'distribucion',
     'anyConstruccion',
     'idufirReg', 'fincaRegistral', 'libro', 'tomo', 'folio',
     'registroProvincia', 'registroCiudad', 'registroNumero',
+    'datosRegistro',
     'dormitorios', 'banyos', 'garaje', 'plazasGaraje', 'trastero',
     'ascensor', 'jardin', 'piscina', 'estadoConservacion', 'certificadoEnergetico',
     'estadoOcupacion', 'tipoOcupante', 'rentaMensual', 'vencimientoAlquiler',
-    'restriccionesUrbanisticas',
+    'restriccionesUrbanisticas', 'notasOcupacion',
   ],
   d: [
-    'estadoLegal', 'faseJudicial', 'subfaseJudicial', 'juzgado', 'partidoJudicial',
-    'numeroProcedimiento', 'fechaSubasta', 'numeroSubasta', 'fechaAdjudicacion',
-    'tipoAdjudicacion',
-    'totalCargas', 'cargasPreferentes', 'cargasPosteriores', 'ibiPendiente',
-    'comunidadPendiente', 'suministrosPendientes', 'embargos', 'usufructo', 'servidumbres',
-    'tipoGarantia', 'rangoGarantia', 'garantiaCruzada',
+    'procedimiento', 'ejecutante', 'juzgado', 'numeroProcedimiento',
+    'fechaSubasta', 'numeroSubasta', 'fechaAdjudicacion', 'tipoAdjudicacion',
+    'autoDespachoEjecucion', 'actuacionesJudiciales',
+    'riesgosJuridicos', 'cargas', 'embargos', 'notasInternas',
   ],
   e: [
     'numeroDeudores', 'tieneAvalistas', 'provinciaDeudor', 'situacionLaboral',
     'nivelIngresos', 'ratingSolvencia', 'notasDeudores',
   ],
   f: [
+    'costeAdquisicionCredito', 'impuestosAjd', 'costesNotariaRegistro', 'gastosDacion',
+    'comisionIntermediacion', 'pujaProbable', 'precioMercado', 'precioVentaRapida',
+    'fechaCompra', 'fechaTerminacion', 'gastosDiversos',
+    'statusPromocionNpl',
     'estrategiaRecuperacion', 'prioridad', 'oportunidadInversion', 'recuperacionEsperada',
     'plazoRecuperacion', 'riesgoRating', 'clusterGeografico', 'gestorAsignado',
     'notasObservaciones', 'estadoDocumentacion', 'escrituraDisponible', 'antiguedadNotaSimple',
@@ -99,6 +105,11 @@ const TASK_SUGGESTIONS: Partial<Record<SeccionId, {
     description: 'Verificar estado actualizado del procedimiento judicial, fase y próximas actuaciones.',
     category: 'LEGAL',
   },
+  f: {
+    title: 'Definir estrategia de recuperación',
+    description: 'Revisar escenarios de rentabilidad y acordar con el equipo la estrategia de recuperación a seguir para esta operación.',
+    category: 'OTRO',
+  },
 };
 
 export default function EnrichmentForm({
@@ -108,6 +119,7 @@ export default function EnrichmentForm({
   initialDeudores,
   users,
   currentUserId,
+  notasTratamiento,
 }: Props) {
   const [activeTab, setActiveTab]           = useState<SeccionId>('a');
   const [isPending, startTransition]        = useTransition();
@@ -116,36 +128,33 @@ export default function EnrichmentForm({
   const methods = useForm<EnrichmentFormValues>({
     defaultValues: {
       // A
+      tituloOperacion: enrichment.tituloOperacion ?? '',
       sellerReference: enrichment.sellerReference ?? '',
       originalLender:  enrichment.originalLender  ?? '',
       idufir:          enrichment.idufir           ?? '',
       cru:             enrichment.cru              ?? '',
       // B — fechas
       fechaOriginacion:       enrichment.fechaOriginacion       ?? '',
-      fechaImpago:            enrichment.fechaImpago            ?? '',
       fechaClasificacionNpl:  enrichment.fechaClasificacionNpl  ?? '',
-      fechaUltimoPago:        enrichment.fechaUltimoPago        ?? '',
       fechaVencimiento:       enrichment.fechaVencimiento       ?? '',
       fechaCompraCartera:     enrichment.fechaCompraCartera     ?? '',
       fechaInicioAccionLegal: enrichment.fechaInicioAccionLegal ?? '',
-      // B — financieros
+      // B — principal
       principalOriginal:   enrichment.principalOriginal   ?? '',
-      principalPendiente:  enrichment.principalPendiente  ?? '',
-      interesesDevengados: enrichment.interesesDevengados ?? '',
-      deudaTotal:          enrichment.deudaTotal          ?? '',
-      gbv:                 enrichment.gbv                 ?? '',
-      tipoInteres:         enrichment.tipoInteres         ?? '',
-      cuotaMensual:        enrichment.cuotaMensual        ?? '',
-      ltv:                 enrichment.ltv                 ?? '',
-      mesesImpago:         enrichment.mesesImpago != null ? String(enrichment.mesesImpago) : undefined,
+      // B2 — AFS
+      principalAFS:  enrichment.principalAFS  ?? '',
+      interesesAFS:  enrichment.interesesAFS  ?? '',
+      costasAFS:     enrichment.costasAFS     ?? '',
+      fechaAFS:      enrichment.fechaAFS      ?? '',
+      // B3 — Deuda actualizada
+      intereses:     enrichment.intereses     ?? '',
+      costas:        enrichment.costas        ?? '',
+      fechaCalculada: enrichment.fechaCalculada ?? '',
       // B — valoraciones
-      tasacionOriginal:      enrichment.tasacionOriginal      ?? '',
-      tasacionActual:        enrichment.tasacionActual        ?? '',
-      fechaTasacion:         enrichment.fechaTasacion         ?? '',
-      valorMercado:          enrichment.valorMercado          ?? '',
-      valorEjecucionForzosa: enrichment.valorEjecucionForzosa ?? '',
-      precioSubasta:         enrichment.precioSubasta         ?? '',
-      precioVenta:           enrichment.precioVenta           ?? '',
+      tasacionOriginal:        enrichment.tasacionOriginal        ?? '',
+      tasacionActual:          enrichment.tasacionActual          ?? '',
+      fechaTasacion:           enrichment.fechaTasacion           ?? '',
+      prestamoHipotecaDetalles: enrichment.prestamoHipotecaDetalles ?? '',
       // C — identificadores
       propertyId:   enrichment.propertyId   ?? '',
       tipoInmueble: enrichment.tipoInmueble ?? '',
@@ -155,7 +164,6 @@ export default function EnrichmentForm({
       municipio:         enrichment.municipio         ?? '',
       municipioId:       enrichment.municipioId != null ? String(enrichment.municipioId) : undefined,
       codPostal:         enrichment.codPostal         ?? '',
-      tipoVia:           enrichment.tipoVia           ?? '',
       nombreVia:         enrichment.nombreVia         ?? '',
       numero:            enrichment.numero            ?? '',
       bloque:            enrichment.bloque            ?? '',
@@ -171,7 +179,10 @@ export default function EnrichmentForm({
       superficieConst:     enrichment.superficieConst     ?? '',
       superficieUtil:      enrichment.superficieUtil       ?? '',
       superficieParcela:   enrichment.superficieParcela   ?? '',
-      zonasComunes:        enrichment.zonasComunes         ?? '',
+      superficieDetalles:  enrichment.superficieDetalles  ?? '',
+      distribucionResumida: enrichment.distribucionResumida ?? '',
+      distribucion:        enrichment.distribucion        ?? '',
+      datosRegistro:       enrichment.datosRegistro       ?? '',
       anyConstruccion:     enrichment.anyConstruccion != null ? String(enrichment.anyConstruccion) : undefined,
       // C — registro
       idufirReg:         enrichment.idufirReg         ?? '',
@@ -198,29 +209,22 @@ export default function EnrichmentForm({
       rentaMensual:          enrichment.rentaMensual        ?? '',
       vencimientoAlquiler:   enrichment.vencimientoAlquiler ?? '',
       restriccionesUrbanisticas: enrichment.restriccionesUrbanisticas ?? '',
+      notasOcupacion:        enrichment.notasOcupacion      ?? '',
       // D
-      estadoLegal:         asEnum<'prejudicial'|'judicial'|'finalizado'>(enrichment.estadoLegal),
-      faseJudicial:        asEnum<'monitorio'|'ordinario'|'ejecucion'>(enrichment.faseJudicial),
-      subfaseJudicial:     enrichment.subfaseJudicial     ?? '',
+      procedimiento:       asEnum<'EJH'|'ETNJ'|'ETJ'|'PO'|'DESAHUCIO'|'OTRO'>(enrichment.procedimiento),
+      ejecutante:          enrichment.ejecutante          ?? '',
       juzgado:             enrichment.juzgado             ?? '',
-      partidoJudicial:     enrichment.partidoJudicial     ?? '',
       numeroProcedimiento: enrichment.numeroProcedimiento ?? '',
       fechaSubasta:        enrichment.fechaSubasta        ?? '',
       numeroSubasta:       enrichment.numeroSubasta       ?? '',
       fechaAdjudicacion:   enrichment.fechaAdjudicacion   ?? '',
       tipoAdjudicacion:    asEnum<'acreedor'|'tercero'|'desierta'>(enrichment.tipoAdjudicacion),
-      totalCargas:           enrichment.totalCargas           ?? '',
-      cargasPreferentes:     enrichment.cargasPreferentes     ?? '',
-      cargasPosteriores:     enrichment.cargasPosteriores     ?? '',
-      ibiPendiente:          enrichment.ibiPendiente          ?? '',
-      comunidadPendiente:    enrichment.comunidadPendiente    ?? '',
-      suministrosPendientes: enrichment.suministrosPendientes ?? '',
-      embargos:              enrichment.embargos              ?? '',
-      usufructo:             enrichment.usufructo             ?? false,
-      servidumbres:          enrichment.servidumbres          ?? '',
-      tipoGarantia:          enrichment.tipoGarantia          ?? '',
-      rangoGarantia:         enrichment.rangoGarantia         ?? '',
-      garantiaCruzada:       enrichment.garantiaCruzada       ?? false,
+      autoDespachoEjecucion: enrichment.autoDespachoEjecucion ?? '',
+      actuacionesJudiciales: enrichment.actuacionesJudiciales ?? [],
+      riesgosJuridicos:  enrichment.riesgosJuridicos  ?? '',
+      cargas:            enrichment.cargas            ?? '',
+      embargos:          enrichment.embargos          ?? '',
+      notasInternas:     enrichment.notasInternas     ?? '',
       // E — scoring agregado
       numeroDeudores:   enrichment.numeroDeudores != null ? String(enrichment.numeroDeudores) : undefined,
       tieneAvalistas:   enrichment.tieneAvalistas  ?? false,
@@ -229,7 +233,21 @@ export default function EnrichmentForm({
       nivelIngresos:    asEnum<'alto'|'medio'|'bajo'>(enrichment.nivelIngresos),
       ratingSolvencia:  enrichment.ratingSolvencia ?? '',
       notasDeudores:    enrichment.notasDeudores   ?? '',
-      // F
+      // F — Rentabilidad
+      costeAdquisicionCredito: enrichment.costeAdquisicionCredito ?? '',
+      impuestosAjd:            enrichment.impuestosAjd            ?? '',
+      costesNotariaRegistro:   enrichment.costesNotariaRegistro   ?? '',
+      gastosDacion:            enrichment.gastosDacion            ?? '',
+      comisionIntermediacion:  enrichment.comisionIntermediacion  ?? '',
+      pujaProbable:            enrichment.pujaProbable            ?? '',
+      precioMercado:           enrichment.precioMercado           ?? '',
+      precioVentaRapida:       enrichment.precioVentaRapida       ?? '',
+      fechaCompra:             enrichment.fechaCompra             ?? '',
+      fechaTerminacion:        enrichment.fechaTerminacion        ?? '',
+      gastosDiversos:          enrichment.gastosDiversos          ?? [],
+      // F — Promoción
+      statusPromocionNpl: asEnum<'en_curso'|'desestimado'|'promocionado'>(enrichment.statusPromocionNpl) ?? 'en_curso',
+      // F — Estrategia
       estrategiaRecuperacion: asEnum<'reo'|'venta_directa'|'reestructuracion'|'dacion'|'otro'>(enrichment.estrategiaRecuperacion),
       prioridad:              asEnum<'alta'|'media'|'baja'>(enrichment.prioridad),
       oportunidadInversion:   enrichment.oportunidadInversion ?? '',
@@ -316,7 +334,15 @@ export default function EnrichmentForm({
               }}
             />
           )}
-          {activeTab === 'f' && <EnrichmentSeccionF />}
+          {activeTab === 'f' && (
+            <EnrichmentSeccionF
+              users={users}
+              currentUserId={currentUserId}
+              enrichmentId={enrichment.id}
+              seccionesCompletadas={seccionesState}
+              notasTratamiento={notasTratamiento}
+            />
+          )}
         </div>
 
         {/* Footer: guardar + crear tarea */}

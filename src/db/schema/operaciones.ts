@@ -1,6 +1,6 @@
 import {
   pgTable, serial, varchar, integer, numeric,
-  boolean, date, timestamp, pgEnum,
+  boolean, date, timestamp, pgEnum, text,
 } from 'drizzle-orm/pg-core';
 import { fondos }   from './fondos';
 import { carteras } from './fondos';
@@ -92,6 +92,7 @@ export const operaciones = pgTable('operaciones', {
 
   statusTratamiento: operacionStatusEnum('status_tratamiento').notNull().default('nuevo'),
   fechaTratamiento:  date('fecha_tratamiento'),
+  notasTratamiento:  text('notas_tratamiento'),
 
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().$onUpdate(() => new Date()).notNull(),

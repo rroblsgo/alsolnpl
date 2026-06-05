@@ -76,12 +76,10 @@ const CAMPO_LABELS: { key: string; label: string; seccion: string }[] = [
   { key: 'referenciaCatastral',label: 'Ref. catastral',         seccion: 'C' },
   { key: 'superficieConst',    label: 'Sup. construida',        seccion: 'C' },
   { key: 'superficieUtil',     label: 'Sup. útil',              seccion: 'C' },
-  { key: 'cargasPreferentes',  label: 'Cargas preferentes',     seccion: 'D' },
-  { key: 'totalCargas',        label: 'Total cargas',           seccion: 'D' },
   { key: 'tasacionOriginal',   label: 'Tasación original',      seccion: 'B' },
   { key: 'juzgado',            label: 'Juzgado',                seccion: 'D' },
   { key: 'numeroProcedimiento',label: 'Nº procedimiento',       seccion: 'D' },
-  { key: 'estadoLegal',        label: 'Estado legal',           seccion: 'D' },
+  { key: 'procedimiento',      label: 'Tipo procedimiento',     seccion: 'D' },
 ];
 
 // ── Componente principal ──────────────────────────────────────────────────────
@@ -122,12 +120,10 @@ export default function NotaSimpleUploader({ enrichmentId, notaSimpleUrl, hasNot
     if (m.referenciaCatastral) setValue('referenciaCatastral', m.referenciaCatastral);
     if (m.superficieConst)    setValue('superficieConst',    m.superficieConst);
     if (m.superficieUtil)     setValue('superficieUtil',     m.superficieUtil);
-    if (m.cargasPreferentes)  setValue('cargasPreferentes',  m.cargasPreferentes);
-    if (m.totalCargas)        setValue('totalCargas',        m.totalCargas);
     if (m.tasacionOriginal)   setValue('tasacionOriginal',   m.tasacionOriginal);
     if (m.juzgado)            setValue('juzgado',            m.juzgado);
     if (m.numeroProcedimiento) setValue('numeroProcedimiento', m.numeroProcedimiento);
-    if (m.estadoLegal)        setValue('estadoLegal',        m.estadoLegal);
+    if (m.procedimiento)      setValue('procedimiento',      m.procedimiento as any);
     setMapeadosAplicados(true);
   }
 

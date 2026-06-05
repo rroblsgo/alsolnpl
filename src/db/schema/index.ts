@@ -36,6 +36,9 @@ export {
 } from './document';
 export type { DocumentEntityType, DocumentCategory } from './document';
 // ─── Feature fondos + carteras + operaciones ─────────────────────────────────
+export { userTablePreferences } from './user_table_preferences';
+export type { TablePreferences, SelectUserTablePreferences } from './user_table_preferences';
+export { DEFAULT_OPERACIONES_ORDER } from './user_table_preferences';
 export { fondos, carteras } from './fondos';
 export type { MapItem } from './fondos';
 export { operaciones } from './operaciones';

@@ -19,6 +19,17 @@ export default function EnrichmentSeccionA() {
         préstamo e inmueble ID provienen de la cartera y no se modifican aquí.
       </p>
 
+      {/* Título de la operación */}
+      <div>
+        <FormLabel htmlFor="tituloOperacion">Título de la operación</FormLabel>
+        <FormInput
+          id="tituloOperacion"
+          placeholder="Descripción libre para identificar esta operación"
+          {...register('tituloOperacion')}
+        />
+        <FormError>{errors.tituloOperacion?.message}</FormError>
+      </div>
+
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
         {/* Seller Reference */}
         <div>

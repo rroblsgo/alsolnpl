@@ -83,3 +83,40 @@ export async function getEnrichmentByOperacionAction(operacionId: number) {
   await requireAuth();
   return enrichmentService.findByOperacionId(operacionId);
 }
+
+/**
+ * Promueve un enrichment a NPL:
+ * - Crea el NPL mapeando los campos del enrichment
+ * - Guarda el nplId en el enrichment
+ * - Actualiza statusTratamiento de la operación a 'comercializado'
+ *
+ * Si statusPromocionNpl = 'desestimado', solo actualiza operación a 'descartado'.
+ */
+export async function promoverEnrichmentANplAction(enrichmentId: number) {
+  const { session } = await requireAuth();
+  if (!session) return { success: '', error: 'No autenticado', nplId: null };
+
+  try {
+    const result = await enrichmentService.promoverANpl(enrichmentId, session.user.id);
+    return { success: `NPL creado: ${result.nuestroCodigoNpl}`, error: '', nplId: result.id };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Error al promocionar';
+    return { success: '', error: msg, nplId: null };
+  }
+}
+
+/**
+ * Marca un enrichment como desestimado y actualiza la operación a 'descartado'.
+ */
+export async function desestimarEnrichmentAction(enrichmentId: number) {
+  const { session } = await requireAuth();
+  if (!session) return { success: '', error: 'No autenticado' };
+
+  try {
+    await enrichmentService.desestimar(enrichmentId);
+    return { success: 'Operación marcada como descartada', error: '' };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : 'Error al desestimar';
+    return { success: '', error: msg };
+  }
+}

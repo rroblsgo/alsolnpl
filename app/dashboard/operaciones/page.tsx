@@ -17,7 +17,7 @@ export default async function OperacionesPage() {
     <>
       <Heading className="text-center text-amber-500">Operaciones</Heading>
       <p className="mt-1 text-center text-sm text-gray-500">
-        {rows.length} operaciones en cartera
+        {rows.length.toLocaleString('es-ES')} operaciones en cartera
       </p>
       <div className="mt-6 pb-12">
         {rows.length === 0 ? (

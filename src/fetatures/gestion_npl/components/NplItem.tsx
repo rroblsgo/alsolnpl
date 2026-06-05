@@ -1,3 +1,5 @@
+import Link from 'next/link';
+import type { Route } from 'next';
 import { NplListItem, NPL_TIPO_INMUEBLE_LABELS } from '../types/npl.types';
 import NplStatusBadge from './NplStatusBadge';
 import NplActions from './NplActions';
@@ -33,6 +35,17 @@ export default function NplItem({ npl }: Props) {
               <span className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-0.5 text-xs font-medium text-indigo-700 ring-1 ring-indigo-600/20 ring-inset">
                 Público
               </span>
+            )}
+            {npl.enrichmentOperacionId && (
+              <Link
+                href={`/dashboard/operaciones/${npl.enrichmentOperacionId}/enrichment` as Route}
+                className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5
+                           text-[10px] font-semibold text-amber-700 ring-1 ring-amber-200
+                           hover:bg-amber-100 transition-colors"
+                title="Ver enrichment de procedencia"
+              >
+                ✦ Enrichment →
+              </Link>
             )}
           </div>
 

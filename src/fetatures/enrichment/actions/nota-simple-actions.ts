@@ -28,12 +28,10 @@ export type NotaSimpleExtraida = {
     referenciaCatastral?: string;
     superficieConst?: string;
     superficieUtil?: string;
-    cargasPreferentes?: string;
-    totalCargas?: string;
     tasacionOriginal?: string;
     juzgado?: string;
     numeroProcedimiento?: string;
-    estadoLegal?: string;
+    procedimiento?: string;
   };
 };
 
@@ -76,12 +74,10 @@ export async function getNotaSimpleAction(enrichmentId: number): Promise<{
         referenciaCatastral: e.referenciaCatastral ?? undefined,
         superficieConst: e.superficieConst ?? undefined,
         superficieUtil: e.superficieUtil ?? undefined,
-        cargasPreferentes: e.cargasPreferentes ?? undefined,
-        totalCargas: e.totalCargas ?? undefined,
         tasacionOriginal: e.tasacionOriginal ?? undefined,
         juzgado: e.juzgado ?? undefined,
         numeroProcedimiento: e.numeroProcedimiento ?? undefined,
-        estadoLegal: e.estadoLegal ?? undefined,
+        procedimiento: e.procedimiento ?? undefined,
       },
     };
     return { success: true, data };
@@ -117,12 +113,10 @@ Devuelve SOLO un objeto JSON válido con esta estructura exacta (sin texto adici
     "referenciaCatastral": "ref catastral si consta",
     "superficieConst": "superficie construida en m2, solo número",
     "superficieUtil": "superficie útil en m2, solo número",
-    "cargasPreferentes": "principal de la hipoteca en euros, solo número",
-    "totalCargas": "suma total de todas las cargas en euros, solo número",
     "tasacionOriginal": "tasación para subasta si consta, solo número",
     "juzgado": "juzgado del procedimiento de ejecución si consta",
     "numeroProcedimiento": "número del procedimiento de ejecución si consta",
-    "estadoLegal": "judicial si hay procedimiento activo, prejudicial si no"
+    "procedimiento": "tipo de procedimiento: EJH, ETNJ, ETJ, PO, DESAHUCIO u OTRO"
   }
 }
 
@@ -248,12 +242,6 @@ export async function extraerNotaSimpleAction(
       ...(extraida.mapeados.superficieUtil && {
         superficieUtil: extraida.mapeados.superficieUtil,
       }),
-      ...(extraida.mapeados.cargasPreferentes && {
-        cargasPreferentes: extraida.mapeados.cargasPreferentes,
-      }),
-      ...(extraida.mapeados.totalCargas && {
-        totalCargas: extraida.mapeados.totalCargas,
-      }),
       ...(extraida.mapeados.tasacionOriginal && {
         tasacionOriginal: extraida.mapeados.tasacionOriginal,
       }),
@@ -261,8 +249,8 @@ export async function extraerNotaSimpleAction(
       ...(extraida.mapeados.numeroProcedimiento && {
         numeroProcedimiento: extraida.mapeados.numeroProcedimiento,
       }),
-      ...(extraida.mapeados.estadoLegal && {
-        estadoLegal: extraida.mapeados.estadoLegal,
+      ...(extraida.mapeados.procedimiento && {
+        procedimiento: extraida.mapeados.procedimiento,
       }),
     } as any);
 

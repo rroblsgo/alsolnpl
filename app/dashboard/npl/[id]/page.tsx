@@ -431,7 +431,7 @@ export default async function NplDetailDashboardPage({ params }: Props) {
             <dt className="text-xs uppercase tracking-wide text-gray-400">
               Auto de despacho de ejecución
             </dt>
-            <dd className="mt-0.5 text-sm text-gray-900">
+            <dd className="mt-0.5 whitespace-pre-wrap text-sm text-gray-900">
               {npl.autoDespachoEjecucion}
             </dd>
           </div>
@@ -439,10 +439,10 @@ export default async function NplDetailDashboardPage({ params }: Props) {
 
         {npl.prestamoHipotecaDetalles && (
           <div className="mt-3">
-            <DataRow
-              label="Préstamo / hipoteca"
-              value={npl.prestamoHipotecaDetalles}
-            />
+            <p className="text-xs font-medium uppercase tracking-wider text-gray-400 mb-1">
+              Préstamo / hipoteca
+            </p>
+            <RichTextContent html={npl.prestamoHipotecaDetalles} />
           </div>
         )}
 
@@ -495,6 +495,36 @@ export default async function NplDetailDashboardPage({ params }: Props) {
               html={npl.riesgosJuridicos}
               className="text-amber-800"
             />
+          </div>
+        )}
+
+        {/* Cargas */}
+        {npl.cargas && npl.cargas !== '<p></p>' && (
+          <div className="mt-5 border-t pt-4">
+            <p className="mb-2 text-xs uppercase tracking-wider text-gray-400">
+              Cargas
+            </p>
+            <RichTextContent html={npl.cargas} className="text-gray-700" />
+          </div>
+        )}
+
+        {/* Embargos */}
+        {npl.embargos && npl.embargos !== '<p></p>' && (
+          <div className="mt-5 border-t pt-4">
+            <p className="mb-2 text-xs uppercase tracking-wider text-gray-400">
+              Embargos
+            </p>
+            <RichTextContent html={npl.embargos} className="text-gray-700" />
+          </div>
+        )}
+
+        {/* Notas ocupación */}
+        {npl.notasOcupacion && npl.notasOcupacion !== '<p></p>' && (
+          <div className="mt-5 border-t pt-4">
+            <p className="mb-2 text-xs uppercase tracking-wider text-gray-400">
+              Notas de ocupación
+            </p>
+            <RichTextContent html={npl.notasOcupacion} className="text-gray-700" />
           </div>
         )}
 

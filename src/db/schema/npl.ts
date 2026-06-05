@@ -54,15 +54,21 @@ export const nplTipoRegistroEnum = pgEnum('npl_tipo_registro', [
 
 export const npl = pgTable('npls', {
   id: serial('id').primaryKey(),
+  propertyId:   varchar('property_id',   { length: 50 }),
+  enrichmentId: integer('enrichment_id'),
+  enrichmentOperacionId: integer('enrichment_operacion_id'),
 
-  // A. Superficies y datos registrales
+  // A. Identificadores y datos registrales
   nuestroCodigoNpl: varchar('nuestro_codigo_npl', { length: 10 }),
   tituloOperacion: varchar('titulo_operacion', { length: 255 }).notNull(),
   referenciaOrigen: varchar('referencia_origen', { length: 100 }),
   fondo: varchar('fondo', { length: 100 }),
+  idufir: varchar('idufir', { length: 50 }),
+  cru: varchar('cru', { length: 50 }),
   direccion: varchar('direccion', { length: 255 }),
   municipio: varchar('municipio', { length: 100 }),
   provincia: varchar('provincia', { length: 100 }),
+  comunidadAutonoma: varchar('comunidad_autonoma', { length: 100 }),
   codigoPostal: varchar('codigo_postal', { length: 10 }),
   tipoInmueble: nplTipoInmuebleEnum('tipo_inmueble')
     .notNull()
@@ -70,14 +76,19 @@ export const npl = pgTable('npls', {
   distribucion: text('distribucion'),
   distribucionResumida: varchar('distribucion_resumida', { length: 255 }),
   superficieConst: numeric('superficie_const', { precision: 10, scale: 2 }),
+  superficieUtil: numeric('superficie_util', { precision: 10, scale: 2 }),
   superficieParcela: numeric('superficie_parcela', { precision: 10, scale: 2 }),
   superficieDetalles: text('superficie_detalles'),
   anyConstruccion: integer('any_construccion'),
   refCatastral: varchar('ref_catastral', { length: 50 }),
+  usoCatastral: varchar('uso_catastral', { length: 100 }),
+  valorRefCatastral: numeric('valor_ref_catastral', { precision: 14, scale: 2 }),
+  valorCatastral: numeric('valor_catastral', { precision: 14, scale: 2 }),
   latCatastro: numeric('lat_catastro', { precision: 12, scale: 8 }),
   lngCatastro: numeric('lng_catastro', { precision: 12, scale: 8 }),
   fincaRegistral: varchar('finca_registral', { length: 100 }),
   datosRegistro: text('datos_registro'),
+  notasObservaciones: text('notas_observaciones'),
   imagenAsociada: varchar('imagen_asociada', { length: 255 }),
   imagenesAdicionales: text('imagenes_adicionales')
     .array()
@@ -120,6 +131,8 @@ export const npl = pgTable('npls', {
   // deuda_actualizada es calculado (principal + intereses + costas), NO se almacena
   fechaCalculada: date('fecha_calculada'),
   tasacionSubasta: numeric('tasacion_subasta', { precision: 14, scale: 2 }),
+  tasacionActual:  numeric('tasacion_actual',  { precision: 14, scale: 2 }),
+  fechaTasacion:   date('fecha_tasacion'),
   procedimiento: nplProcedimientoEnum('procedimiento').default('EJH'),
   numProcedimiento: varchar('num_procedimiento', { length: 50 }),
   juzgado: varchar('juzgado', { length: 255 }),
@@ -132,7 +145,10 @@ export const npl = pgTable('npls', {
     .default([]),
   actuacionesSeguidas: text('actuaciones_seguidas'),
   riesgosJuridicos: text('riesgos_juridicos'),
+  cargas: text('cargas'),
+  embargos: text('embargos'),
   notasInternas: text('notas_internas'),
+  notasOcupacion: text('notas_ocupacion'),
   informacionInversor: text('informacion_inversor'),
 
   // Control interno

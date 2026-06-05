@@ -8,6 +8,10 @@ import {
 // ─── Sección A: Superficies y datos registrales ───────────────────────────────
 
 const NplSectionASchema = z.object({
+  // Procedencia
+  propertyId:   z.string().trim().max(50).optional().or(z.literal('')),
+  enrichmentId: z.number().int().optional().nullable(),
+  enrichmentOperacionId: z.number().int().optional().nullable(),
   // nuestroCodigoNpl se genera automáticamente al crear; en edición es display only
   nuestroCodigoNpl: z.string().trim().max(10).optional().or(z.literal('')),
   tituloOperacion: z
@@ -17,9 +21,12 @@ const NplSectionASchema = z.object({
     .max(255, { error: 'El título no puede superar los 255 caracteres' }),
   referenciaOrigen: z.string().trim().max(100).optional().or(z.literal('')),
   fondo: z.string().trim().max(100).optional().or(z.literal('')),
+  idufir: z.string().trim().max(50).optional().or(z.literal('')),
+  cru: z.string().trim().max(50).optional().or(z.literal('')),
   direccion: z.string().trim().max(255).optional().or(z.literal('')),
   municipio: z.string().trim().max(100).optional().or(z.literal('')),
   provincia: z.string().trim().max(100).optional().or(z.literal('')),
+  comunidadAutonoma: z.string().trim().max(100).optional().or(z.literal('')),
   codigoPostal: z.string().trim().max(10).optional().or(z.literal('')),
   tipoInmueble: z.enum(NPL_TIPOS_INMUEBLE, {
     error: 'Selecciona un tipo de inmueble válido',
@@ -27,6 +34,12 @@ const NplSectionASchema = z.object({
   distribucion: z.string().trim().optional().or(z.literal('')),
   distribucionResumida: z.string().trim().max(255).optional().or(z.literal('')),
   superficieConst: z
+    .string()
+    .optional()
+    .refine((v) => !v || !isNaN(parseFloat(v)), {
+      message: 'Introduce un número válido',
+    }),
+  superficieUtil: z
     .string()
     .optional()
     .refine((v) => !v || !isNaN(parseFloat(v)), {
@@ -46,10 +59,14 @@ const NplSectionASchema = z.object({
       message: 'Introduce un año válido (4 dígitos)',
     }),
   refCatastral: z.string().trim().max(50).optional().or(z.literal('')),
+  usoCatastral: z.string().trim().max(100).optional().or(z.literal('')),
+  valorRefCatastral: z.string().optional().refine((v) => !v || !isNaN(parseFloat(v)), { message: 'Número válido' }),
+  valorCatastral: z.string().optional().refine((v) => !v || !isNaN(parseFloat(v)), { message: 'Número válido' }),
   latCatastro: z.string().optional().or(z.literal('')),
   lngCatastro: z.string().optional().or(z.literal('')),
   fincaRegistral: z.string().trim().max(100).optional().or(z.literal('')),
   datosRegistro: z.string().trim().optional().or(z.literal('')),
+  notasObservaciones: z.string().trim().optional().or(z.literal('')),
   imagenAsociada: z.string().trim().max(255).optional().or(z.literal('')),
   imagenesAdicionales: z.array(z.string()).default([]),
 });
@@ -148,6 +165,13 @@ const NplSectionCSchema = z.object({
     .refine((v) => !v || !isNaN(parseFloat(v)), {
       message: 'Introduce un número válido',
     }),
+  tasacionActual: z
+    .string()
+    .optional()
+    .refine((v) => !v || !isNaN(parseFloat(v)), {
+      message: 'Introduce un número válido',
+    }),
+  fechaTasacion: z.string().optional().or(z.literal('')),
   procedimiento: z.enum(NPL_PROCEDIMIENTOS).optional(),
   numProcedimiento: z.string().trim().max(50).optional().or(z.literal('')),
   juzgado: z.string().trim().max(255).optional().or(z.literal('')),
@@ -164,7 +188,10 @@ const NplSectionCSchema = z.object({
     .default([]),
   actuacionesSeguidas: z.string().trim().optional().or(z.literal('')),
   riesgosJuridicos: z.string().trim().optional().or(z.literal('')),
+  cargas: z.string().trim().optional().or(z.literal('')),
+  embargos: z.string().trim().optional().or(z.literal('')),
   notasInternas: z.string().trim().optional().or(z.literal('')),
+  notasOcupacion: z.string().trim().optional().or(z.literal('')),
 });
 
 // ─── Control ──────────────────────────────────────────────────────────────────

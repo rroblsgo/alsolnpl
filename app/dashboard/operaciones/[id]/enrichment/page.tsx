@@ -31,7 +31,10 @@ export default async function EnrichmentPage({ params }: Props) {
     'seleccionado', 'comercializado', 'ofertado', 'reservado', 'vendido', 'cancelado',
   ];
   const puedeEnriquecer = estadosPermitidos.includes(operacion.statusTratamiento);
-  const enrichment = await enrichmentService.findByOperacionId(operacionId);
+  const enrichment = await enrichmentService.findByOperacionId(operacionId).catch((e) => {
+    console.error('[EnrichmentPage] Error cargando enrichment:', e);
+    return null;
+  });
 
   // Cargar deudores si ya existe el enrichment
   const deudores = enrichment
@@ -59,7 +62,11 @@ export default async function EnrichmentPage({ params }: Props) {
         )}
       </div>
 
-      <EnrichmentHeaderOperacion operacion={operacion} />
+      <EnrichmentHeaderOperacion
+        operacion={operacion}
+        tituloOperacion={enrichment?.tituloOperacion}
+        statusPromocion={enrichment?.statusPromocionNpl as any}
+      />
 
       <div className="mt-6">
         {!puedeEnriquecer ? (
@@ -85,6 +92,7 @@ export default async function EnrichmentPage({ params }: Props) {
             initialDeudores={deudores}
             users={usersList}
             currentUserId={session.user.id}
+            notasTratamiento={operacion.notasTratamiento}
           />
         )}
       </div>

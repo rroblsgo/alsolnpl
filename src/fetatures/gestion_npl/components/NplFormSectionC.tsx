@@ -108,15 +108,17 @@ export default function NplFormSectionC() {
       </div>
 
       <div>
-        <FormLabel htmlFor="prestamoHipotecaDetalles">
-          Préstamo / hipoteca — detalles
-        </FormLabel>
-        <textarea
-          id="prestamoHipotecaDetalles"
-          rows={3}
-          className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
-          placeholder="Entidad, escritura, capital, cesión..."
-          {...register('prestamoHipotecaDetalles')}
+        <FormLabel>Préstamo / hipoteca — detalles</FormLabel>
+        <Controller
+          control={control}
+          name="prestamoHipotecaDetalles"
+          render={({ field }) => (
+            <NplRichTextEditor
+              value={field.value ?? ''}
+              onChange={field.onChange}
+              placeholder="Entidad, escritura, capital, cesión..."
+            />
+          )}
         />
       </div>
 
@@ -149,7 +151,7 @@ export default function NplFormSectionC() {
         <div className="grid gap-3 md:grid-cols-3 pt-1">
           <div>
             <FormLabel htmlFor="principal" className="text-xs">
-              Principal (€)
+              Principal — Deuda total AFS (€)
             </FormLabel>
             <FormInput
               id="principal"
@@ -204,20 +206,50 @@ export default function NplFormSectionC() {
         </div>
       </div>
 
-      {/* ── Tasación subasta ─────────────────────────────────────────────── */}
+      {/* ── Tasaciones ───────────────────────────────────────────────────── */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div>
+          <FormLabel htmlFor="tasacionSubasta">Tasación subasta (€)</FormLabel>
+          <FormInput
+            id="tasacionSubasta"
+            type="number" step="0.01" min="0" placeholder="0.00"
+            {...register('tasacionSubasta')}
+          />
+          {errors.tasacionSubasta && (
+            <FormError>{errors.tasacionSubasta.message}</FormError>
+          )}
+        </div>
+        <div>
+          <FormLabel htmlFor="tasacionActual">Tasación actual (€)</FormLabel>
+          <FormInput
+            id="tasacionActual"
+            type="number" step="0.01" min="0" placeholder="0.00"
+            {...register('tasacionActual')}
+          />
+          {errors.tasacionActual && (
+            <FormError>{errors.tasacionActual.message}</FormError>
+          )}
+        </div>
+        <div>
+          <FormLabel htmlFor="fechaTasacion">Fecha tasación</FormLabel>
+          <FormInput id="fechaTasacion" type="date" {...register('fechaTasacion')} />
+        </div>
+      </div>
+
+      {/* ── Notas ocupación (TipTap) ──────────────────────────────────────── */}
       <div>
-        <FormLabel htmlFor="tasacionSubasta">Tasación subasta (€)</FormLabel>
-        <FormInput
-          id="tasacionSubasta"
-          type="number"
-          step="0.01"
-          min="0"
-          placeholder="0.00"
-          {...register('tasacionSubasta')}
+        <FormLabel>Notas de ocupación</FormLabel>
+        <Controller
+          control={control}
+          name="notasOcupacion"
+          render={({ field }) => (
+            <NplRichTextEditor
+              value={field.value ?? ''}
+              onChange={field.onChange}
+              placeholder="Situación de ocupación, comunicaciones con el ocupante, gestiones realizadas..."
+            />
+          )}
         />
-        {errors.tasacionSubasta && (
-          <FormError>{errors.tasacionSubasta.message}</FormError>
-        )}
       </div>
 
       {/* ── Actuaciones seguidas (TipTap existente) ──────────────────────── */}
@@ -292,6 +324,38 @@ export default function NplFormSectionC() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* ── Cargas (TipTap) ────────────────────────────────────────────────── */}
+      <div>
+        <FormLabel>Cargas</FormLabel>
+        <Controller
+          control={control}
+          name="cargas"
+          render={({ field }) => (
+            <NplRichTextEditor
+              value={field.value ?? ''}
+              onChange={field.onChange}
+              placeholder="Cargas preferentes, posteriores, IBI, comunidad, suministros..."
+            />
+          )}
+        />
+      </div>
+
+      {/* ── Embargos (TipTap) ──────────────────────────────────────────────── */}
+      <div>
+        <FormLabel>Embargos</FormLabel>
+        <Controller
+          control={control}
+          name="embargos"
+          render={({ field }) => (
+            <NplRichTextEditor
+              value={field.value ?? ''}
+              onChange={field.onChange}
+              placeholder="Embargos anotados, usufructo, servidumbres..."
+            />
+          )}
+        />
       </div>
 
       {/* ── Riesgos jurídicos (TipTap) ────────────────────────────────────── */}

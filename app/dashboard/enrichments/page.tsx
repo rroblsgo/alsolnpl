@@ -54,6 +54,8 @@ export default async function EnrichmentsPage() {
       nplId:         operacionEnrichments.nplId,
       updatedAt:     operacionEnrichments.updatedAt,
       secciones:     operacionEnrichments.seccionesCompletadas,
+      tituloOperacion: operacionEnrichments.tituloOperacion,
+      statusPromocion: operacionEnrichments.statusPromocionNpl,
       // Operación origen
       mainKey:       operaciones.mainKey,
       expedienteId:  operaciones.expedienteId,
@@ -92,7 +94,7 @@ export default async function EnrichmentsPage() {
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
           <table className="w-full text-sm">
             <thead className="border-b bg-gray-50 text-xs uppercase tracking-wider text-gray-400">
               <tr>
@@ -103,7 +105,7 @@ export default async function EnrichmentsPage() {
                 <th className="px-4 py-3 text-left">Completitud</th>
                 <th className="px-4 py-3 text-left">Actualizado</th>
                 <th className="px-4 py-3 text-left">NPL</th>
-                <th className="px-4 py-3" />
+                <th className="sticky right-0 bg-gray-50 px-4 py-3 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]" />
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -120,12 +122,29 @@ export default async function EnrichmentsPage() {
                 return (
                   <tr key={row.id} className="transition hover:bg-gray-50">
                     <td className="px-4 py-3">
-                      <p className="font-medium text-gray-900">
+                      {row.tituloOperacion && (
+                        <p className="font-semibold text-gray-900 leading-tight">
+                          {row.tituloOperacion}
+                        </p>
+                      )}
+                      <p className={`font-mono text-xs text-gray-500 ${row.tituloOperacion ? '' : 'font-medium text-gray-900 text-sm'}`}>
                         {row.expedienteId ?? `Operación ${row.operacionId}`}
                       </p>
                       {row.mainKey && (
                         <p className="font-mono text-[10px] text-gray-400">{row.mainKey}</p>
                       )}
+                      {/* Badge estado — siempre visible en la columna de operación */}
+                      <span className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ${
+                        row.statusPromocion === 'promocionado'
+                          ? 'bg-emerald-100 text-emerald-800 ring-emerald-200'
+                          : row.statusPromocion === 'desestimado'
+                          ? 'bg-red-100 text-red-700 ring-red-200'
+                          : 'bg-blue-100 text-blue-700 ring-blue-200'
+                      }`}>
+                        {row.statusPromocion === 'promocionado' ? '✓ Promocionado'
+                          : row.statusPromocion === 'desestimado' ? '✗ Desestimado'
+                          : '⏳ En curso'}
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-gray-600">
                       {row.municipioEnr ?? row.municipio ?? '—'}
@@ -158,25 +177,38 @@ export default async function EnrichmentsPage() {
                         day: '2-digit', month: '2-digit', year: '2-digit',
                       })}
                     </td>
-                    <td className="px-4 py-3">
-                      {row.nplId ? (
+                    <td className="px-4 py-3 space-y-1">
+                      {/* Badge estado promoción */}
+                      {row.statusPromocion && (
+                        <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ${
+                          row.statusPromocion === 'promocionado'
+                            ? 'bg-emerald-100 text-emerald-800 ring-emerald-200'
+                            : row.statusPromocion === 'desestimado'
+                            ? 'bg-red-100 text-red-700 ring-red-200'
+                            : 'bg-blue-100 text-blue-700 ring-blue-200'
+                        }`}>
+                          {row.statusPromocion === 'promocionado' ? '✓ Promocionado'
+                            : row.statusPromocion === 'desestimado' ? '✗ Desestimado'
+                            : '⏳ En curso'}
+                        </span>
+                      )}
+                      {/* Link al NPL si existe */}
+                      {row.nplId && (
                         <Link
-                          href={`/dashboard/gestion-npl/${row.nplId}` as Route}
-                          className="text-xs text-emerald-600 hover:underline"
+                          href={`/dashboard/npl/${row.nplId}` as Route}
+                          className="block text-xs text-emerald-600 hover:underline font-medium"
                         >
-                          NPL #{row.nplId}
+                          NPL #{row.nplId} →
                         </Link>
-                      ) : (
-                        <span className="text-xs text-gray-400">—</span>
                       )}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="sticky right-0 bg-white px-4 py-3 text-right shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]">
                       <Link
                         href={`/dashboard/operaciones/${row.operacionId}/enrichment` as Route}
                         className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5
-                                   text-xs font-medium text-emerald-700 transition hover:bg-emerald-100"
+                                   text-xs font-medium text-emerald-700 transition hover:bg-emerald-100 whitespace-nowrap"
                       >
-                        Editar
+                        Editar →
                       </Link>
                     </td>
                   </tr>

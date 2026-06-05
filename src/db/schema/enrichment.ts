@@ -13,6 +13,7 @@ import {
 } from 'drizzle-orm/pg-core';
 import { operaciones } from './operaciones';
 import { users } from './auth-schema';
+import { nplProcedimientoEnum } from './npl';
 
 export const enrichmentFuenteEnum = pgEnum('enrichment_fuente', [
   'fondo_banco',
@@ -22,6 +23,12 @@ export const enrichmentFuenteEnum = pgEnum('enrichment_fuente', [
   'visita_campo',
   'elaboracion',
   'otro',
+]);
+
+export const enrichmentStatusPromocionEnum = pgEnum('enrichment_status_promocion', [
+  'en_curso',
+  'desestimado',
+  'promocionado',
 ]);
 
 export type SeccionesCompletadas = {
@@ -39,9 +46,11 @@ export const operacionEnrichments = pgTable('operacion_enrichments', {
     .references(() => operaciones.id, { onDelete: 'cascade' })
     .unique(),
 
-  nplId: integer('npl_id'),
+  nplId:              integer('npl_id'),
+  statusPromocionNpl: enrichmentStatusPromocionEnum('status_promocion_npl').default('en_curso'),
 
   // ── A. Identificadores ────────────────────────────────────────────────────
+  tituloOperacion: varchar('titulo_operacion', { length: 255 }),
   sellerReference: varchar('seller_reference', { length: 100 }),
   originalLender:  varchar('original_lender',  { length: 255 }),
   idufir:          varchar('idufir',           { length: 50  }),
@@ -49,30 +58,28 @@ export const operacionEnrichments = pgTable('operacion_enrichments', {
 
   // ── B. Datos préstamo — fechas ────────────────────────────────────────────
   fechaOriginacion:       date('fecha_originacion'),
-  fechaImpago:            date('fecha_impago'),
   fechaClasificacionNpl:  date('fecha_clasificacion_npl'),
-  fechaUltimoPago:        date('fecha_ultimo_pago'),
   fechaVencimiento:       date('fecha_vencimiento'),
   fechaCompraCartera:     date('fecha_compra_cartera'),
   fechaInicioAccionLegal: date('fecha_inicio_accion_legal'),
-  // B — financieros
+  // B — principal original
   principalOriginal:   numeric('principal_original',   { precision: 14, scale: 2 }),
-  principalPendiente:  numeric('principal_pendiente',  { precision: 14, scale: 2 }),
-  interesesDevengados: numeric('intereses_devengados', { precision: 14, scale: 2 }),
-  deudaTotal:          numeric('deuda_total',          { precision: 14, scale: 2 }),
-  gbv:                 numeric('gbv',                  { precision: 14, scale: 2 }),
-  tipoInteres:         numeric('tipo_interes',         { precision: 6,  scale: 4 }),
-  cuotaMensual:        numeric('cuota_mensual',        { precision: 14, scale: 2 }),
-  ltv:                 numeric('ltv',                  { precision: 6,  scale: 4 }),
-  mesesImpago:         integer('meses_impago'),
+  // B2 — Datos AFS (certificación de deuda al título ejecutivo)
+  principalAFS:  numeric('principal_afs',  { precision: 14, scale: 2 }),
+  interesesAFS:  numeric('intereses_afs',  { precision: 14, scale: 2 }),
+  costasAFS:     numeric('costas_afs',     { precision: 14, scale: 2 }),
+  // deuda_total_afs = principalAFS + interesesAFS + costasAFS (calculado, no almacenado)
+  fechaAFS:      date('fecha_afs'),
+  // B3 — Deuda actualizada
+  intereses:     numeric('intereses',      { precision: 14, scale: 2 }),
+  costas:        numeric('costas',         { precision: 14, scale: 2 }),
+  // deuda_actualizada = deuda_total_afs + intereses + costas (calculado, no almacenado)
+  fechaCalculada: date('fecha_calculada'),
   // B — valoraciones
-  tasacionOriginal:      numeric('tasacion_original',      { precision: 14, scale: 2 }),
-  tasacionActual:        numeric('tasacion_actual',        { precision: 14, scale: 2 }),
+  tasacionOriginal:      numeric('tasacion_original', { precision: 14, scale: 2 }),
+  tasacionActual:        numeric('tasacion_actual',   { precision: 14, scale: 2 }),
   fechaTasacion:         date('fecha_tasacion'),
-  valorMercado:          numeric('valor_mercado',          { precision: 14, scale: 2 }),
-  valorEjecucionForzosa: numeric('valor_ejecucion_forzosa',{ precision: 14, scale: 2 }),
-  precioSubasta:         numeric('precio_subasta',         { precision: 14, scale: 2 }),
-  precioVenta:           numeric('precio_venta',           { precision: 14, scale: 2 }),
+  prestamoHipotecaDetalles: text('prestamo_hipoteca_detalles'),
 
   // ── C. Datos inmueble — identificadores de inmueble ──────────────────────
   propertyId:    varchar('property_id',   { length: 50  }), // ← nuevo
@@ -83,7 +90,6 @@ export const operacionEnrichments = pgTable('operacion_enrichments', {
   municipio:         varchar('municipio',          { length: 100 }),
   municipioId:       integer('municipio_id'),
   codPostal:         varchar('cod_postal',         { length: 10  }),
-  tipoVia:           varchar('tipo_via',           { length: 50  }),
   nombreVia:         varchar('nombre_via',         { length: 200 }),
   numero:            varchar('numero',             { length: 20  }),
   bloque:            varchar('bloque',             { length: 20  }),
@@ -99,7 +105,10 @@ export const operacionEnrichments = pgTable('operacion_enrichments', {
   superficieConst:     numeric('superficie_const',     { precision: 10, scale: 2 }),
   superficieUtil:      numeric('superficie_util',      { precision: 10, scale: 2 }),
   superficieParcela:   numeric('superficie_parcela',   { precision: 10, scale: 2 }),
-  zonasComunes:        numeric('zonas_comunes',        { precision: 10, scale: 2 }),
+  superficieDetalles:  text('superficie_detalles'),
+  distribucionResumida: varchar('distribucion_resumida', { length: 255 }),
+  distribucion:        text('distribucion'),
+  datosRegistro:       text('datos_registro'),
   anyConstruccion:     integer('any_construccion'),
   // C — registro
   idufirReg:         varchar('idufir_reg',          { length: 50  }),
@@ -127,32 +136,26 @@ export const operacionEnrichments = pgTable('operacion_enrichments', {
   rentaMensual:              numeric('renta_mensual',     { precision: 10, scale: 2 }),
   vencimientoAlquiler:       date('vencimiento_alquiler'),
   restriccionesUrbanisticas: text('restricciones_urbanisticas'),
+  notasOcupacion:            text('notas_ocupacion'),
 
   // ── D. Procedimiento judicial ─────────────────────────────────────────────
-  estadoLegal:         varchar('estado_legal',         { length: 50  }),
-  faseJudicial:        varchar('fase_judicial',        { length: 50  }),
-  subfaseJudicial:     varchar('subfase_judicial',     { length: 100 }),
+  procedimiento:       nplProcedimientoEnum('procedimiento'),
+  ejecutante:          varchar('ejecutante',          { length: 255 }),
   juzgado:             varchar('juzgado',              { length: 255 }),
-  partidoJudicial:     varchar('partido_judicial',     { length: 100 }),
   numeroProcedimiento: varchar('numero_procedimiento', { length: 50  }),
   fechaSubasta:        date('fecha_subasta'),
   numeroSubasta:       varchar('numero_subasta',       { length: 20  }),
   fechaAdjudicacion:   date('fecha_adjudicacion'),
   tipoAdjudicacion:    varchar('tipo_adjudicacion',    { length: 50  }),
-  // D — cargas
-  totalCargas:           numeric('total_cargas',           { precision: 14, scale: 2 }),
-  cargasPreferentes:     numeric('cargas_preferentes',     { precision: 14, scale: 2 }),
-  cargasPosteriores:     numeric('cargas_posteriores',     { precision: 14, scale: 2 }),
-  ibiPendiente:          numeric('ibi_pendiente',          { precision: 10, scale: 2 }),
-  comunidadPendiente:    numeric('comunidad_pendiente',    { precision: 10, scale: 2 }),
-  suministrosPendientes: numeric('suministros_pendientes', { precision: 10, scale: 2 }),
-  embargos:              text('embargos'),
-  usufructo:             boolean('usufructo'),
-  servidumbres:          text('servidumbres'),
-  // D — garantías
-  tipoGarantia:    varchar('tipo_garantia',  { length: 50 }),
-  rangoGarantia:   varchar('rango_garantia', { length: 10 }),
-  garantiaCruzada: boolean('garantia_cruzada'),
+  autoDespachoEjecucion: text('auto_despacho_ejecucion'),
+  actuacionesJudiciales: jsonb('actuaciones_judiciales')
+    .$type<{ fecha: string; titulo: string }[]>()
+    .notNull()
+    .default([]),
+  riesgosJuridicos: text('riesgos_juridicos'),
+  cargas:           text('cargas'),
+  embargos:         text('embargos'),
+  notasInternas:    text('notas_internas'),
 
   // ── E. Deudores ───────────────────────────────────────────────────────────
   numeroDeudores:   integer('numero_deudores'),
@@ -164,6 +167,22 @@ export const operacionEnrichments = pgTable('operacion_enrichments', {
   notasDeudores:    text('notas_deudores'),
 
   // ── F. Estrategia ─────────────────────────────────────────────────────────
+  // F1 — Rentabilidad (idéntico a gestion_npl)
+  costeAdquisicionCredito: numeric('coste_adquisicion_credito', { precision: 14, scale: 2 }),
+  impuestosAjd:            numeric('impuestos_ajd',             { precision: 14, scale: 2 }),
+  costesNotariaRegistro:   numeric('costes_notaria_registro',   { precision: 14, scale: 2 }),
+  gastosDacion:            numeric('gastos_dacion',             { precision: 14, scale: 2 }),
+  comisionIntermediacion:  numeric('comision_intermediacion',   { precision: 14, scale: 2 }),
+  pujaProbable:            numeric('puja_probable',             { precision: 14, scale: 2 }),
+  precioMercado:           numeric('precio_mercado',            { precision: 14, scale: 2 }),
+  precioVentaRapida:       numeric('precio_venta_rapida',       { precision: 14, scale: 2 }),
+  fechaCompra:             date('fecha_compra'),
+  fechaTerminacion:        date('fecha_terminacion'),
+  gastosDiversos:          jsonb('gastos_diversos')
+    .$type<{ titulo: string; valor: number }[]>()
+    .notNull()
+    .default([]),
+  // F2 — Estrategia
   estrategiaRecuperacion: varchar('estrategia_recuperacion', { length: 50  }),
   prioridad:              varchar('prioridad',               { length: 20  }),
   oportunidadInversion:   varchar('oportunidad_inversion',  { length: 50  }),

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState, useCallback, useRef } from 'react';
+import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import {
   useReactTable, getCoreRowModel, getSortedRowModel,
   getFilteredRowModel, getPaginationRowModel,
@@ -143,40 +143,71 @@ function ColumnFilter({ column, label }: {
   label: string;
 }) {
   const isCapitalize = CAPITALIZE_FIELDS.has(column?.id ?? '');
+  const [open, setOpen] = useState(false);
 
-  // Deduplicar variantes de capitalización: 'madrid', 'Madrid', 'MADRID' → 'Madrid'
   const rawValues = Array.from(column?.getFacetedUniqueValues?.() ?? new Map())
     .map(([v]) => v).filter(v => v !== null && v !== undefined && v !== '');
-  const seen = new Map<string, string>(); // normalizado -> valor display
+  const seen = new Map<string, string>();
   for (const v of rawValues) {
     const display = isCapitalize ? capitalize(String(v)) : String(v);
     const key = display.toLowerCase();
     if (!seen.has(key)) seen.set(key, display);
   }
   const uniqueValues = Array.from(seen.values()).sort((a, b) => a.localeCompare(b, 'es'));
-
-  const current = (column?.getFilterValue() as string) ?? '';
   if (uniqueValues.length <= 1) return null;
 
-  // El filtro compara en minúsculas para ser case-insensitive
-  const handleChange = (display: string) => {
-    if (!display) { column?.setFilterValue(undefined); return; }
-    if (isCapitalize) {
-      // Filtra todas las variantes que normalicen al mismo valor
-      column?.setFilterValue(display);
-    } else {
-      column?.setFilterValue(display);
-    }
+  const current: string[] = (column?.getFilterValue() as string[]) ?? [];
+
+  const toggle = (val: string) => {
+    const normalized = val.toLowerCase();
+    const alreadyIn = current.some(c => c.toLowerCase() === normalized);
+    const next = alreadyIn
+      ? current.filter(c => c.toLowerCase() !== normalized)
+      : [...current, val];
+    column?.setFilterValue(next.length > 0 ? next : undefined);
   };
 
+  const clearAll = () => { column?.setFilterValue(undefined); setOpen(false); };
+  const activeCount = current.length;
+
   return (
-    <div className="flex flex-col gap-1">
+    <div className="relative flex flex-col gap-1">
       <span className="text-xs font-medium text-gray-500">{label}</span>
-      <select value={current} onChange={e => handleChange(e.target.value)}
-        className="rounded border border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:outline-none">
-        <option value="">Todos</option>
-        {uniqueValues.map(v => <option key={v} value={v}>{STATUS_LABELS[v] ?? v}</option>)}
-      </select>
+      <button
+        type="button"
+        onClick={() => setOpen(o => !o)}
+        className={`flex items-center justify-between gap-2 rounded border px-2 py-1 text-xs
+          focus:outline-none focus:border-blue-400 min-w-[120px]
+          ${activeCount > 0 ? 'border-blue-400 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-700'}`}
+      >
+        <span>{activeCount > 0 ? `${activeCount} seleccionado${activeCount > 1 ? 's' : ''}` : 'Todos'}</span>
+        <span className="text-gray-400">▾</span>
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 z-50 mt-1 max-h-64 min-w-[180px] overflow-y-auto
+                        rounded-lg border border-gray-200 bg-white shadow-lg">
+          <div className="flex items-center justify-between border-b px-3 py-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400">{label}</span>
+            {activeCount > 0 && (
+              <button onClick={clearAll} className="text-[10px] text-red-500 hover:text-red-700">Limpiar</button>
+            )}
+          </div>
+          <ul className="py-1">
+            {uniqueValues.map(v => {
+              const checked = current.some(c => c.toLowerCase() === v.toLowerCase());
+              return (
+                <li key={v}>
+                  <label className="flex cursor-pointer items-center gap-2 px-3 py-1.5 hover:bg-gray-50">
+                    <input type="checkbox" checked={checked} onChange={() => toggle(v)}
+                      className="h-3.5 w-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-400" />
+                    <span className="text-xs text-gray-700">{STATUS_LABELS[v] ?? v}</span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
@@ -188,12 +219,17 @@ function ResizeHandle({ onMouseDown }: { onMouseDown: (e: React.MouseEvent) => v
   );
 }
 
-function ColumnsPanel({ allColumns, columnOrder, onOrderChange }: {
+function ColumnsPanel({ allColumns, columnOrder, onOrderChange, onResetOrder }: {
   allColumns: ReturnType<ReturnType<typeof useReactTable<SelectOperacion>>['getAllColumns']>;
   columnOrder: ColumnOrderState;
   onOrderChange: (o: ColumnOrderState) => void;
+  onResetOrder: () => void;
 }) {
   const draggableIds = columnOrder.filter(id => id !== '_sel' && id !== '_id');
+  const allDraggableIds = allColumns.map(c => c.id).filter(id => id !== '_sel' && id !== '_id');
+  const missingIds = allDraggableIds.filter(id => !draggableIds.includes(id));
+  const allIds = [...draggableIds, ...missingIds];
+
   const dragItem     = useRef<string | null>(null);
   const dragOverItem = useRef<string | null>(null);
 
@@ -204,9 +240,21 @@ function ColumnsPanel({ allColumns, columnOrder, onOrderChange }: {
     const newOrder = [...columnOrder];
     const fi = newOrder.indexOf(dragItem.current);
     const ti = newOrder.indexOf(dragOverItem.current);
-    newOrder.splice(fi, 1); newOrder.splice(ti, 0, dragItem.current);
-    onOrderChange(newOrder);
+    if (fi !== -1 && ti !== -1) {
+      newOrder.splice(fi, 1); newOrder.splice(ti, 0, dragItem.current);
+      onOrderChange(newOrder);
+    }
     dragItem.current = null; dragOverItem.current = null;
+  };
+
+  const handleToggle = (col: ReturnType<ReturnType<typeof useReactTable<SelectOperacion>>['getAllColumns']>[0]) => {
+    const inOrder = draggableIds.includes(col.id);
+    const willBeVisible = !col.getIsVisible();
+    // Si se está activando y no está en el order, añadirla para que sea arrastrable
+    if (!inOrder && willBeVisible) {
+      onOrderChange([...columnOrder, col.id]);
+    }
+    col.toggleVisibility(willBeVisible);
   };
 
   const colMap = Object.fromEntries(allColumns.map(c => [c.id, c]));
@@ -215,9 +263,11 @@ function ColumnsPanel({ allColumns, columnOrder, onOrderChange }: {
     <div className="absolute right-0 top-full z-20 mt-1 w-64 rounded-xl border border-gray-200 bg-white p-3 shadow-lg">
       <div className="mb-2 flex items-center justify-between">
         <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-400">Columnas</p>
-        <p className="text-[10px] text-gray-300">arrastra para reordenar</p>
+        <button onClick={onResetOrder}
+          className="text-[10px] text-blue-500 hover:text-blue-700 font-medium">
+          Reset completo
+        </button>
       </div>
-      {/* Fijas */}
       {['_sel','_id'].map(id => (
         <div key={id} className="mb-1 flex items-center gap-2 rounded px-1 py-1 bg-gray-50">
           <span className="h-3.5 w-3.5 shrink-0" />
@@ -225,22 +275,35 @@ function ColumnsPanel({ allColumns, columnOrder, onOrderChange }: {
           <span className="text-xs text-gray-400">{id === '_sel' ? 'Sel. (fija)' : 'ID (fija)'}</span>
         </div>
       ))}
+      {missingIds.length > 0 && (
+        <p className="mb-1 mt-2 text-[10px] text-gray-300 px-1 border-t pt-1">
+          ↓ activa para añadir al orden arrastrable
+        </p>
+      )}
       <div className="max-h-72 overflow-y-auto space-y-0.5">
-        {draggableIds.map(id => {
+        {allIds.map(id => {
           const col = colMap[id];
           if (!col) return null;
+          const inOrder = draggableIds.includes(id);
           return (
-            <div key={id} draggable
-              onDragStart={() => { dragItem.current = id; }}
-              onDragEnter={() => { dragOverItem.current = id; }}
+            <div key={id} draggable={inOrder}
+              onDragStart={() => { if (inOrder) dragItem.current = id; }}
+              onDragEnter={() => { if (inOrder) dragOverItem.current = id; }}
               onDragEnd={handleDragEnd}
               onDragOver={e => e.preventDefault()}
-              className="flex items-center gap-2 cursor-grab active:cursor-grabbing rounded px-1 py-1 hover:bg-gray-50 select-none group/drag">
-              <GripVertical className="h-3.5 w-3.5 shrink-0 text-gray-300 group-hover/drag:text-gray-400" />
+              className={`flex items-center gap-2 rounded px-1 py-1 hover:bg-gray-50 select-none group/drag
+                ${inOrder ? 'cursor-grab active:cursor-grabbing' : 'cursor-default'}`}>
+              {inOrder
+                ? <GripVertical className="h-3.5 w-3.5 shrink-0 text-gray-300 group-hover/drag:text-gray-400" />
+                : <span className="h-3.5 w-3.5 shrink-0" />
+              }
               <label className="flex items-center gap-2 flex-1 cursor-pointer">
-                <input type="checkbox" checked={col.getIsVisible()} onChange={col.getToggleVisibilityHandler()}
+                <input type="checkbox" checked={col.getIsVisible()}
+                  onChange={() => handleToggle(col)}
                   onClick={e => e.stopPropagation()} className="h-3 w-3 rounded" />
-                <span className="text-xs text-gray-700 truncate">{FIELD_LABELS[id] ?? id}</span>
+                <span className={`text-xs truncate ${inOrder ? 'text-gray-700' : 'text-gray-400'}`}>
+                  {FIELD_LABELS[id] ?? id}
+                </span>
               </label>
             </div>
           );
@@ -250,14 +313,27 @@ function ColumnsPanel({ allColumns, columnOrder, onOrderChange }: {
   );
 }
 
-type Props = { operaciones: SelectOperacion[]; mapItems: MapItem[]; carteraName: string };
+type Props = {
+  operaciones: SelectOperacion[];
+  mapItems: MapItem[];
+  carteraName: string;
+  // Preferencias guardadas
+  savedColumnOrder?:      string[];
+  savedColumnVisibility?: Record<string, boolean>;
+  onPrefsChange?:         (prefs: { columnOrder?: string[]; columnVisibility?: Record<string, boolean> }) => void;
+};
 
-export default function OperacionesTable({ operaciones: initialRows, mapItems }: Props) {
+export default function OperacionesTable({
+  operaciones: initialRows,
+  mapItems,
+  savedColumnOrder,
+  savedColumnVisibility,
+  onPrefsChange,
+}: Props) {
   const [rows,          setRows]         = useState<SelectOperacion[]>(initialRows);
   const [sorting,       setSorting]      = useState<SortingState>([]);
   const [globalFilter,  setGlobalFilter] = useState('');
   const [columnFilters, setColumnFilters]= useState<ColumnFiltersState>([]);
-  const [colVisibility, setColVisibility]= useState<VisibilityState>({});
   const [colSizing,     setColSizing]    = useState<ColumnSizingState>({});
   const [showFilters,   setShowFilters]  = useState(false);
   const [showColPanel,  setShowColPanel] = useState(false);
@@ -267,11 +343,46 @@ export default function OperacionesTable({ operaciones: initialRows, mapItems }:
   const [confirmDel,    setConfirmDel]   = useState(false);
   const [deleting,      setDeleting]     = useState(false);
 
+  // Sync rows when server returns new page
+  useEffect(() => { setRows(initialRows); }, [initialRows]);
+
   const populatedFields = useMemo(() => getPopulatedFields(rows, mapItems), [rows, mapItems]);
 
-  const [colOrder, setColOrder] = useState<ColumnOrderState>(() => ['_sel', '_id', ...populatedFields]);
+  const defaultOrder = useMemo(
+    () => savedColumnOrder ?? ['_sel', '_id', ...populatedFields],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [savedColumnOrder]
+  );
+
+  const [colOrder, setColOrder] = useState<ColumnOrderState>(defaultOrder);
+  const [colVisibility, setColVisibility] = useState<VisibilityState>(savedColumnVisibility ?? {});
+
   const prevFields = useRef<string[]>([]);
   if (prevFields.current.length === 0 && populatedFields.length > 0) prevFields.current = populatedFields;
+
+  // Notificar cambios de orden al padre para el botón "Guardar"
+  const handleOrderChange = (newOrder: ColumnOrderState) => {
+    setColOrder(newOrder);
+    table.setColumnOrder(newOrder);
+    onPrefsChange?.({ columnOrder: newOrder });
+  };
+
+  const handleResetOrder = () => {
+    const allIds = ['_sel', '_id', ...table.getAllColumns()
+      .map(c => c.id)
+      .filter(id => id !== '_sel' && id !== '_id')];
+    setColOrder(allIds);
+    table.setColumnOrder(allIds);
+    onPrefsChange?.({ columnOrder: allIds });
+  };
+
+  const handleVisibilityChange = (updater: VisibilityState | ((prev: VisibilityState) => VisibilityState)) => {
+    setColVisibility(prev => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      onPrefsChange?.({ columnVisibility: next });
+      return next;
+    });
+  };
 
   const defaultSize = (key: string) => {
     if (key === 'statusTratamiento') return 110;
@@ -320,11 +431,16 @@ export default function OperacionesTable({ operaciones: initialRows, mapItems }:
       size: defaultSize(key), minSize: 60, maxSize: 600,
       enableResizing: true, enableSorting: true, enableColumnFilter: true,
       filterFn: CAPITALIZE_FIELDS.has(key)
-        ? (row, columnId, filterValue) => {
-            const val = (row.getValue(columnId) as string) ?? '';
-            return capitalize(val).toLowerCase() === String(filterValue).toLowerCase();
+        ? (row, columnId, filterValue: string[]) => {
+            if (!filterValue?.length) return true;
+            const val = capitalize((row.getValue(columnId) as string) ?? '').toLowerCase();
+            return filterValue.some(f => capitalize(f).toLowerCase() === val);
           }
-        : 'includesString',
+        : (row, columnId, filterValue: string[]) => {
+            if (!filterValue?.length) return true;
+            const val = String((row.getValue(columnId) as string) ?? '').toLowerCase();
+            return filterValue.some(f => val.includes(f.toLowerCase()));
+          },
       cell: ({ getValue }) => {
         const val = getValue();
         if (key === 'statusTratamiento') {
@@ -351,7 +467,8 @@ export default function OperacionesTable({ operaciones: initialRows, mapItems }:
     columnResizeMode: 'onChange',
     state: { sorting, globalFilter, columnFilters, columnVisibility: colVisibility, columnSizing: colSizing, columnOrder: colOrder },
     onSortingChange: setSorting, onGlobalFilterChange: setGlobalFilter,
-    onColumnFiltersChange: setColumnFilters, onColumnVisibilityChange: setColVisibility,
+    onColumnFiltersChange: setColumnFilters,
+    onColumnVisibilityChange: handleVisibilityChange,
     onColumnSizingChange: setColSizing, onColumnOrderChange: setColOrder,
     getCoreRowModel: getCoreRowModel(), getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(), getPaginationRowModel: getPaginationRowModel(),
@@ -388,7 +505,6 @@ export default function OperacionesTable({ operaciones: initialRows, mapItems }:
   const activeFilters  = columnFilters.length;
   const filteredCount  = table.getFilteredRowModel().rows.length;
   const filterableCols = table.getAllColumns().filter(c => c.id !== '_sel' && c.id !== '_id' && !NUMERIC_FIELDS.has(c.id) && c.getCanFilter());
-  const handleOrderChange = (newOrder: ColumnOrderState) => { setColOrder(newOrder); table.setColumnOrder(newOrder); };
 
   return (
     <>
@@ -451,11 +567,16 @@ export default function OperacionesTable({ operaciones: initialRows, mapItems }:
               className={`rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors ${showColPanel ? 'border-blue-400 bg-blue-50 text-blue-700' : 'border-gray-300 text-gray-600 hover:bg-gray-50'}`}>
               Columnas ({table.getVisibleLeafColumns().filter(c => c.id !== '_sel').length - 1})
             </button>
-            {showColPanel && <ColumnsPanel allColumns={table.getAllColumns()} columnOrder={colOrder} onOrderChange={handleOrderChange} />}
+            {showColPanel && <ColumnsPanel allColumns={table.getAllColumns()} columnOrder={colOrder} onOrderChange={handleOrderChange} onResetOrder={handleResetOrder} />}
           </div>
 
-          {(Object.keys(colSizing).length > 0 || colOrder.join() !== ['_sel','_id',...populatedFields].join()) && (
-            <button onClick={() => { setColSizing({}); setColOrder(['_sel','_id',...populatedFields]); }}
+          {(Object.keys(colSizing).length > 0 || colOrder.join() !== defaultOrder.join()) && (
+            <button onClick={() => {
+              setColSizing({});
+              setColOrder(defaultOrder);
+              table.setColumnOrder(defaultOrder);
+              onPrefsChange?.({ columnOrder: defaultOrder });
+            }}
               className="text-xs text-gray-400 hover:text-gray-600">Reset</button>
           )}
         </div>
@@ -537,13 +658,13 @@ export default function OperacionesTable({ operaciones: initialRows, mapItems }:
         {/* Paginación */}
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5">
           <div className="flex items-center gap-2 text-xs text-gray-500">
-            <span>Filas:</span>
-            {[10,25,50,100].map(n => (
+            <span>Filas/pág:</span>
+            {[25, 50, 100].map(n => (
               <button key={n} onClick={() => handlePageSize(n)}
                 className={`rounded px-2 py-0.5 font-medium transition-colors ${pageSize === n ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{n}</button>
             ))}
           </div>
-          <span className="text-xs text-gray-500">Pág. {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}</span>
+          <span className="text-xs text-gray-500">Pág. {table.getState().pagination.pageIndex + 1} de {table.getPageCount()} · {table.getFilteredRowModel().rows.length.toLocaleString('es-ES')} registros</span>
           <div className="flex items-center gap-1">
             {[
               { l: '«', f: () => table.setPageIndex(0),                        d: !table.getCanPreviousPage() },

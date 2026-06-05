@@ -17,6 +17,7 @@ export default function NplFormSectionA() {
   const {
     register,
     watch,
+    control,
     formState: { errors },
   } = useFormContext<NplInput>();
 
@@ -80,6 +81,18 @@ export default function NplFormSectionA() {
         </div>
       </div>
 
+      {/* IDUFIR + CRU */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <div>
+          <FormLabel htmlFor="idufir">IDUFIR</FormLabel>
+          <FormInput id="idufir" type="text" maxLength={50} {...register('idufir')} />
+        </div>
+        <div>
+          <FormLabel htmlFor="cru">CRU</FormLabel>
+          <FormInput id="cru" type="text" maxLength={50} {...register('cru')} />
+        </div>
+      </div>
+
       {/* Tipo inmueble */}
       <div>
         <FormLabel htmlFor="tipoInmueble">Tipo de inmueble *</FormLabel>
@@ -112,6 +125,12 @@ export default function NplFormSectionA() {
 
       {/* ─── Provincia → Municipio en cascada ─────────────────────────────── */}
       <ProvinciasMunicipiosSelect />
+
+      {/* Comunidad autónoma */}
+      <div>
+        <FormLabel htmlFor="comunidadAutonoma">Comunidad autónoma</FormLabel>
+        <FormInput id="comunidadAutonoma" type="text" maxLength={100} {...register('comunidadAutonoma')} />
+      </div>
 
       {/* Código postal */}
       <div>
@@ -173,6 +192,18 @@ export default function NplFormSectionA() {
           {errors.superficieConst && (
             <FormError>{errors.superficieConst.message}</FormError>
           )}
+        </div>
+        <div>
+          <FormLabel htmlFor="superficieUtil">
+            Superficie útil (m²)
+          </FormLabel>
+          <FormInput
+            id="superficieUtil"
+            type="number"
+            step="0.01"
+            min="0"
+            {...register('superficieUtil')}
+          />
         </div>
         <div>
           <FormLabel htmlFor="superficieParcela">
@@ -240,6 +271,22 @@ export default function NplFormSectionA() {
         <CatastroLookupButton />
       </div>
 
+      {/* Uso catastral + valores */}
+      <div className="grid gap-4 md:grid-cols-3">
+        <div>
+          <FormLabel htmlFor="usoCatastral">Uso catastral</FormLabel>
+          <FormInput id="usoCatastral" type="text" maxLength={100} placeholder="Residencial, Industrial..." {...register('usoCatastral')} />
+        </div>
+        <div>
+          <FormLabel htmlFor="valorRefCatastral">Valor ref. catastral (€)</FormLabel>
+          <FormInput id="valorRefCatastral" type="number" step="0.01" min="0" placeholder="0.00" {...register('valorRefCatastral')} />
+        </div>
+        <div>
+          <FormLabel htmlFor="valorCatastral">Valor catastral (€)</FormLabel>
+          <FormInput id="valorCatastral" type="number" step="0.01" min="0" placeholder="0.00" {...register('valorCatastral')} />
+        </div>
+      </div>
+
       {/* Coordenadas Catastro — editables manualmente, se graban con el formulario */}
       <div className="grid gap-4 md:grid-cols-2">
         <div>
@@ -273,6 +320,22 @@ export default function NplFormSectionA() {
           className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
           placeholder="Tomo, libro, folio, inscripción..."
           {...register('datosRegistro')}
+        />
+      </div>
+
+      {/* Notas y observaciones (TipTap) */}
+      <div>
+        <FormLabel>Notas y observaciones</FormLabel>
+        <Controller
+          control={control}
+          name="notasObservaciones"
+          render={({ field }) => (
+            <NplRichTextEditor
+              value={field.value ?? ''}
+              onChange={field.onChange}
+              placeholder="Observaciones generales, contexto, condicionantes, oportunidades detectadas..."
+            />
+          )}
         />
       </div>
 

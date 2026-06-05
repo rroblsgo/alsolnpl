@@ -169,14 +169,14 @@ export async function cargarOperacionesAction(
 
 // ─── Actualizar status y fecha ────────────────────────────────────────────────
 export async function updateOperacionStatusAction(
-  id: number, statusTratamiento: string, fechaTratamiento: string
+  id: number, statusTratamiento: string, fechaTratamiento: string, notasTratamiento?: string
 ): Promise<{ success: string; error: string }> {
   await requireDashboard();
   const VALID = ['nuevo','analisis','scoring','seleccionado','descartado',
                  'comercializado','ofertado','reservado','vendido','cancelado'];
   if (!VALID.includes(statusTratamiento)) return { success: '', error: 'Status no válido' };
   try {
-    await operacionesRepository.updateStatus(id, statusTratamiento as never, fechaTratamiento);
+    await operacionesRepository.updateStatus(id, statusTratamiento as never, fechaTratamiento, notasTratamiento);
     return { success: 'Operación actualizada', error: '' };
   } catch (e) {
     return { success: '', error: (e as Error).message };

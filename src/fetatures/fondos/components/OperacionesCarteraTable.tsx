@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo, useCallback, useEffect, useState, useTransition } from 'react';
+import { useEffect, useState, useCallback, useTransition } from 'react';
 import type { SelectOperacion } from '@/src/db/schema/operaciones';
+import type { MapItem } from '@/src/db/schema/fondos';
 import type { TablePreferences } from '@/src/db/schema/user_table_preferences';
 import { DEFAULT_OPERACIONES_ORDER } from '@/src/db/schema/user_table_preferences';
 import OperacionesTable from './OperacionesTable';
@@ -9,36 +10,14 @@ import { getTablePreferencesAction, saveTablePreferencesAction } from '../action
 import toast from 'react-hot-toast';
 import { Save } from 'lucide-react';
 
-const EXCLUDED = new Set(['fondoId', 'carteraId', 'createdAt', 'updatedAt', 'mainKey']);
-
-const FIELD_TO_SNAKE: Record<string, string> = {
-  expedienteId: 'expediente_id', prestamoId: 'prestamo_id', nplReo: 'npl_reo',
-  deudorNombre: 'deudor_nombre', fechaAlta: 'fecha_alta', deuda: 'deuda',
-  precioVentaMercado: 'precio_venta_mercado', rangoLienPrestamo: 'rango_lien_prestamo',
-  valorTasacionSubasta: 'valor_tasacion_subasta', propertyId: 'property_id',
-  propertyTipo: 'property_tipo', propertyTipoOcupacion: 'property_tipo_ocupacion',
-  esVpo: 'es_vpo', esVulnerable: 'es_vulnerable',
-  comunidadAutonoma: 'comunidad_autonoma',
-  provincia: 'provincia', municipio: 'municipio', codPostal: 'cod_postal',
-  direccionCompleta: 'direccion_completa', referenciaCatastral: 'referencia_catastral',
-  idufir: 'idufir', parcel: 'parcel',
-  superficieConst: 'superficie_const', superficieUtil: 'superficie_util',
-  superficieFinca: 'superficie_finca', superficieRegistral: 'superficie_registral',
-  anyConstruccion: 'any_construccion',
-  procLegal: 'proc_legal', procLegalTipo: 'proc_legal_tipo', procLegalFase: 'proc_legal_fase',
-  procLegalNumero: 'proc_legal_numero', procLegalCourt: 'proc_legal_court',
-  procLegalEstado: 'proc_legal_estado', registroProvincia: 'registro_provincia',
-  registroCiudad: 'registro_ciudad', registroNumero: 'registro_numero',
-  assetManager: 'asset_manager', oficinaResponsable: 'oficina_responsable',
-  statusTratamiento: 'status_tratamiento', fechaTratamiento: 'fecha_tratamiento',
-};
-
 type Props = {
   operaciones: SelectOperacion[];
+  mapItems:    MapItem[];
+  carteraName: string;
 };
 
-export default function OperacionesGlobalTable({ operaciones }: Props) {
-  const [prefs, setPrefs] = useState<TablePreferences>({
+export default function OperacionesCarteraTable({ operaciones, mapItems, carteraName }: Props) {
+  const [prefs, setPrefs]         = useState<TablePreferences>({
     columnOrder:      ['_sel', '_id', ...DEFAULT_OPERACIONES_ORDER],
     columnVisibility: {},
   });
@@ -66,18 +45,6 @@ export default function OperacionesGlobalTable({ operaciones }: Props) {
     });
   }, [prefs]);
 
-  const mapItems = useMemo(() => {
-    return Object.entries(FIELD_TO_SNAKE)
-      .filter(([camel]) => !EXCLUDED.has(camel))
-      .filter(([camel]) =>
-        operaciones.some(r => {
-          const v = (r as Record<string, unknown>)[camel];
-          return v !== null && v !== undefined && v !== '';
-        })
-      )
-      .map(([, snake]) => ({ columna_name_origen: snake, campo_operaciones: snake }));
-  }, [operaciones]);
-
   if (!prefsLoaded) {
     return <p className="py-8 text-center text-sm text-gray-400">Cargando tabla...</p>;
   }
@@ -101,7 +68,7 @@ export default function OperacionesGlobalTable({ operaciones }: Props) {
       <OperacionesTable
         operaciones={operaciones}
         mapItems={mapItems}
-        carteraName="Global"
+        carteraName={carteraName}
         savedColumnOrder={prefs.columnOrder}
         savedColumnVisibility={prefs.columnVisibility}
         onPrefsChange={handlePrefsChange}

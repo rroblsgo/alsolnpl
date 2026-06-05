@@ -7,6 +7,7 @@ import ProvinciasMunicipiosSelectEnrichment from './ProvinciasMunicipiosSelectEn
 import CatastroLookupButtonEnrichment from './CatastroLookupButtonEnrichment';
 import NotaSimpleUploader from './NotaSimpleUploader';
 import { DynamicEnrichmentLocation } from './DynamicEnrichmentLocation';
+import NplRichTextEditor from '@/src/fetatures/gestion_npl/components/NplRichTextEditor';
 
 const ESTADOS_CONSERVACION = [
   { value: 'nuevo',       label: 'Nuevo / Obra nueva' },
@@ -57,7 +58,7 @@ type Props = {
 };
 
 export default function EnrichmentSeccionC({ enrichmentId, notaSimpleUrl, hasNotaSimple }: Props) {
-  const { register, watch } = useFormContext<EnrichmentFormValues>();
+  const { register, watch, setValue } = useFormContext<EnrichmentFormValues>();
 
   const estadoOcupacion     = watch('estadoOcupacion');
   const latitud             = watch('latitud');
@@ -66,7 +67,23 @@ export default function EnrichmentSeccionC({ enrichmentId, notaSimpleUrl, hasNot
   const referenciaCatastral = watch('referenciaCatastral');
   const superficieConst = watch('superficieConst');
   const superficieUtil  = watch('superficieUtil');
-  const idufirA         = watch('idufir'); // IDUFIR proviene de sección A — display only
+  const idufirA         = watch('idufir');
+  const distribucion    = watch('distribucion');
+  const notasOcupacion  = watch('notasOcupacion');
+
+  // Para generar datosRegistro
+  const libro             = watch('libro');
+  const tomo              = watch('tomo');
+  const folio             = watch('folio');
+  const registroProvincia = watch('registroProvincia');
+  const registroCiudad    = watch('registroCiudad');
+  const registroNumero    = watch('registroNumero');
+
+  // Para generar notasOcupacion
+  const estadoConservacion       = watch('estadoConservacion');
+  const certificadoEnergetico    = watch('certificadoEnergetico');
+  const tipoOcupante             = watch('tipoOcupante');
+  const restriccionesUrbanisticas = watch('restriccionesUrbanisticas');
 
   const ratioUtil = (() => {
     const c = superficieConst ? parseFloat(String(superficieConst)) : null;
@@ -132,10 +149,6 @@ export default function EnrichmentSeccionC({ enrichmentId, notaSimpleUrl, hasNot
           <div>
             <FormLabel htmlFor="codPostal">Código postal</FormLabel>
             <FormInput id="codPostal" placeholder="41001" maxLength={10} {...register('codPostal')} />
-          </div>
-          <div>
-            <FormLabel htmlFor="tipoVia">Tipo de vía</FormLabel>
-            <FormInput id="tipoVia" placeholder="Calle, Avda., Plaza..." {...register('tipoVia')} />
           </div>
           <div className="sm:col-span-2">
             <FormLabel htmlFor="nombreVia">
@@ -312,17 +325,39 @@ export default function EnrichmentSeccionC({ enrichmentId, notaSimpleUrl, hasNot
               {...register('superficieParcela')}
             />
           </div>
-          <div>
-            <FormLabel htmlFor="zonasComunes">Zonas comunes (m²)</FormLabel>
-            <FormInput
-              id="zonasComunes"
-              type="number"
-              step="0.01"
-              min="0"
-              placeholder="0.00"
-              {...register('zonasComunes')}
-            />
-          </div>
+        </div>
+
+        {/* Superficie — detalles */}
+        <div className="mt-4">
+          <FormLabel htmlFor="superficieDetalles">Detalles de superficie</FormLabel>
+          <textarea
+            id="superficieDetalles"
+            rows={3}
+            className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm
+                       focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            placeholder="Descripción detallada de superficies (terraza, trastero incluido, etc.)"
+            {...register('superficieDetalles')}
+          />
+        </div>
+
+        {/* Distribución resumida */}
+        <div className="mt-4">
+          <FormLabel htmlFor="distribucionResumida">Distribución resumida</FormLabel>
+          <FormInput
+            id="distribucionResumida"
+            placeholder="Ej: 3 hab, salón, cocina, 2 baños, terraza"
+            {...register('distribucionResumida')}
+          />
+        </div>
+
+        {/* Distribución — TipTap */}
+        <div className="mt-4">
+          <FormLabel htmlFor="distribucion">Distribución (detalle)</FormLabel>
+          <NplRichTextEditor
+            value={distribucion ?? ''}
+            onChange={(html) => setValue('distribucion', html, { shouldDirty: true })}
+            placeholder="Descripción detallada de la distribución interior del inmueble..."
+          />
         </div>
       </div>
 
@@ -383,6 +418,42 @@ export default function EnrichmentSeccionC({ enrichmentId, notaSimpleUrl, hasNot
             <FormLabel htmlFor="folio">Folio</FormLabel>
             <FormInput id="folio" className="font-mono" {...register('folio')} />
           </div>
+        </div>
+
+        {/* Datos registro — texto libre */}
+        <div className="mt-4">
+          <div className="mb-1 flex items-center justify-between">
+            <FormLabel htmlFor="datosRegistro">Datos registrales adicionales</FormLabel>
+            <button
+              type="button"
+              onClick={() => {
+                const v = (val: string | null | undefined) => val?.trim() || '—';
+                const lines = [
+                  ['Libro',               v(libro)],
+                  ['Tomo',                v(tomo)],
+                  ['Folio',               v(folio)],
+                  ['Registro provincia',  v(registroProvincia)],
+                  ['Registro ciudad',     v(registroCiudad)],
+                  ['Registro número',     v(registroNumero)],
+                ];
+                const text = lines.map(([l, val]) => `${l}: ${val}`).join('\n');
+                setValue('datosRegistro', text, { shouldDirty: true });
+              }}
+              className="flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50
+                         px-2.5 py-1 text-[11px] font-semibold text-blue-600
+                         hover:bg-blue-100 transition-colors"
+            >
+              ↓ Generar desde datos registro
+            </button>
+          </div>
+          <textarea
+            id="datosRegistro"
+            rows={4}
+            className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm
+                       focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+            placeholder="Observaciones sobre el historial registral, cargas previas, titularidades..."
+            {...register('datosRegistro')}
+          />
         </div>
 
         {/* Nota simple — upload + extracción automática */}
@@ -518,6 +589,40 @@ export default function EnrichmentSeccionC({ enrichmentId, notaSimpleUrl, hasNot
                        focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
             placeholder="Limitaciones de uso, protección urbanística, VPO..."
             {...register('restriccionesUrbanisticas')}
+          />
+        </div>
+
+        {/* Notas de ocupación — TipTap */}
+        <div className="mt-4">
+          <div className="mb-1 flex items-center justify-between">
+            <FormLabel htmlFor="notasOcupacion">Notas de ocupación</FormLabel>
+            <button
+              type="button"
+              onClick={() => {
+                const v = (val: string | null | undefined) => val?.trim() || '—';
+                const lines = [
+                  ['Estado de conservación',      v(estadoConservacion)],
+                  ['Certificado energético',       v(certificadoEnergetico)],
+                  ['Estado de ocupación',          v(estadoOcupacion)],
+                  ['Tipo de ocupante',             v(tipoOcupante)],
+                  ['Restricciones urbanísticas',   v(restriccionesUrbanisticas)],
+                ];
+                const html =
+                  '<p><strong>Datos de ocupación</strong></p>' +
+                  lines.map(([l, val]) => `<p><strong>${l}:</strong> ${val}</p>`).join('');
+                setValue('notasOcupacion', html, { shouldDirty: true });
+              }}
+              className="flex items-center gap-1.5 rounded-lg border border-blue-200 bg-blue-50
+                         px-2.5 py-1 text-[11px] font-semibold text-blue-600
+                         hover:bg-blue-100 transition-colors"
+            >
+              ↓ Generar desde datos ocupación
+            </button>
+          </div>
+          <NplRichTextEditor
+            value={notasOcupacion ?? ''}
+            onChange={(html) => setValue('notasOcupacion', html, { shouldDirty: true })}
+            placeholder="Observaciones sobre la situación de ocupación, comunicaciones con el ocupante, gestiones realizadas..."
           />
         </div>
       </div>

@@ -173,6 +173,7 @@ export default function OperacionDetailModal({
   const [fecha, setFecha] = useState(
     operacion.fechaTratamiento ?? new Date().toISOString().slice(0, 10)
   );
+  const [notas, setNotas] = useState(operacion.notasTratamiento ?? '');
   const [saving, setSaving] = useState(false);
   const [confirmDel, setConfirmDel] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -182,7 +183,8 @@ export default function OperacionDetailModal({
     const { success, error } = await updateOperacionStatusAction(
       operacion.id,
       status,
-      fecha
+      fecha,
+      notas || undefined
     );
     setSaving(false);
     if (error) {
@@ -194,6 +196,7 @@ export default function OperacionDetailModal({
       ...operacion,
       statusTratamiento: status,
       fechaTratamiento: fecha,
+      notasTratamiento: notas || null,
     });
   };
 
@@ -282,6 +285,34 @@ export default function OperacionDetailModal({
                 />
               </div>
             </div>
+
+            {/* Notas de tratamiento */}
+            <div className="mt-3">
+              <label className="block text-xs font-medium text-gray-600 mb-1">
+                Notas / motivo de selección
+              </label>
+              <textarea
+                value={notas}
+                onChange={(e) => setNotas(e.target.value)}
+                rows={3}
+                placeholder="Anota aquí el motivo, observaciones o cualquier información relevante sobre el tratamiento de esta operación..."
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm
+                           focus:border-blue-400 focus:outline-none focus:ring-1 focus:ring-blue-400
+                           resize-none placeholder:text-gray-300"
+              />
+            </div>
+
+            {/* Mostrar notas guardadas si existen y no estamos editando */}
+            {operacion.notasTratamiento && operacion.notasTratamiento !== notas && (
+              <div className="mt-2 rounded-lg bg-white/60 border border-blue-200 px-3 py-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-blue-400 mb-1">
+                  Notas guardadas
+                </p>
+                <p className="text-xs text-gray-600 whitespace-pre-wrap">
+                  {operacion.notasTratamiento}
+                </p>
+              </div>
+            )}
             <div className="mt-4 flex items-center justify-between">
               <span
                 className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${STATUS_COLORS[status] ?? 'bg-gray-100 text-gray-600'}`}

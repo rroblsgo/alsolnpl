@@ -1,9 +1,23 @@
 import type { SelectOperacion } from '@/src/db/schema/operaciones';
 import { STATUS_LABELS, STATUS_COLORS } from '@/src/db/schema/operaciones';
 
-type Props = { operacion: SelectOperacion };
+type StatusPromocion = 'en_curso' | 'desestimado' | 'promocionado';
 
-export default function EnrichmentHeaderOperacion({ operacion }: Props) {
+const PROMOCION_CONFIG: Record<StatusPromocion, { label: string; cls: string }> = {
+  en_curso:     { label: '⏳ En curso',     cls: 'bg-blue-100 text-blue-800 ring-blue-200' },
+  desestimado:  { label: '✗ Desestimado',  cls: 'bg-red-100 text-red-700 ring-red-200' },
+  promocionado: { label: '✓ Promocionado', cls: 'bg-emerald-100 text-emerald-800 ring-emerald-200' },
+};
+
+type Props = {
+  operacion:          SelectOperacion;
+  tituloOperacion?:   string | null;
+  statusPromocion?:   StatusPromocion | null;
+};
+
+export default function EnrichmentHeaderOperacion({ operacion, tituloOperacion, statusPromocion }: Props) {
+  const promocion = statusPromocion ? PROMOCION_CONFIG[statusPromocion] : null;
+
   return (
     <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -11,7 +25,12 @@ export default function EnrichmentHeaderOperacion({ operacion }: Props) {
           <p className="text-xs font-medium uppercase tracking-wide text-amber-600">
             Operación origen
           </p>
-          <h2 className="mt-0.5 text-base font-semibold text-gray-900">
+          {tituloOperacion && (
+            <p className="mt-0.5 text-lg font-semibold text-gray-900">
+              {tituloOperacion}
+            </p>
+          )}
+          <h2 className={`font-semibold text-gray-900 ${tituloOperacion ? 'mt-0.5 text-sm text-gray-500' : 'mt-0.5 text-base'}`}>
             {operacion.expedienteId ?? '—'} · {operacion.prestamoId ?? '—'}
             {operacion.mainKey && (
               <span className="ml-2 font-mono text-sm font-normal text-gray-500">
@@ -28,13 +47,19 @@ export default function EnrichmentHeaderOperacion({ operacion }: Props) {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {/* Estado promoción NPL */}
+          {promocion && (
+            <span className={`rounded-full px-3 py-1 text-xs font-semibold ring-1 ${promocion.cls}`}>
+              {promocion.label}
+            </span>
+          )}
           {/* Tipo inmueble */}
           {operacion.propertyTipo && (
             <span className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-gray-700 ring-1 ring-gray-200">
               {operacion.propertyTipo}
             </span>
           )}
-          {/* Status */}
+          {/* Status operación */}
           <span
             className={`rounded-full px-2.5 py-1 text-xs font-medium ${
               STATUS_COLORS[operacion.statusTratamiento] ??
@@ -46,17 +71,13 @@ export default function EnrichmentHeaderOperacion({ operacion }: Props) {
         </div>
       </div>
 
-      {/* Datos financieros básicos del excel */}
+      {/* Datos registrales básicos */}
       <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-600">
-        {operacion.deuda && (
+        {operacion.referenciaCatastral && (
           <span>
-            Deuda:{' '}
-            <strong className="text-gray-900">
-              {Number(operacion.deuda).toLocaleString('es-ES', {
-                style: 'currency',
-                currency: 'EUR',
-                maximumFractionDigits: 0,
-              })}
+            Ref. catastral:{' '}
+            <strong className="font-mono text-gray-900">
+              {operacion.referenciaCatastral}
             </strong>
           </span>
         )}
@@ -69,14 +90,6 @@ export default function EnrichmentHeaderOperacion({ operacion }: Props) {
                 currency: 'EUR',
                 maximumFractionDigits: 0,
               })}
-            </strong>
-          </span>
-        )}
-        {operacion.referenciaCatastral && (
-          <span>
-            Ref. catastral:{' '}
-            <strong className="font-mono text-gray-900">
-              {operacion.referenciaCatastral}
             </strong>
           </span>
         )}

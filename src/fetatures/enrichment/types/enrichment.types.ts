@@ -34,9 +34,9 @@ export const ENRICHMENT_FUENTES = [
 // Campos mínimos requeridos por sección para marcarla como completa
 export const CAMPOS_REQUERIDOS_SECCION: Record<SeccionId, (keyof SelectEnrichment)[]> = {
   a: ['sellerReference', 'originalLender'],
-  b: ['principalPendiente', 'deudaTotal', 'tasacionActual'],
-  c: ['referenciaCatastral', 'provincia', 'municipio'], // ← corregido
-  d: ['estadoLegal', 'faseJudicial', 'numeroProcedimiento'],
+  b: ['principalAFS', 'fechaAFS', 'tasacionActual'],
+  c: ['referenciaCatastral', 'provincia', 'municipio'],
+  d: ['procedimiento', 'numeroProcedimiento'],
   e: ['numeroDeudores'],
   f: ['estrategiaRecuperacion', 'prioridad', 'riesgoRating'],
 };

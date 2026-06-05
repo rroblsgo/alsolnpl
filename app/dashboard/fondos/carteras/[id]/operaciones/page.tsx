@@ -6,7 +6,7 @@ import { requireDashboard } from '@/src/lib/auth-server';
 import { generatePageTitle } from '@/src/shared/utils/metadata';
 import { fondoService } from '@/src/fetatures/fondos/services/FondoService';
 import { operacionesRepository } from '@/src/fetatures/fondos/services/OperacionesRepository';
-import OperacionesTable from '@/src/fetatures/fondos/components/OperacionesTable';
+import OperacionesCarteraTable from '@/src/fetatures/fondos/components/OperacionesCarteraTable';
 import type { MapItem } from '@/src/db/schema/fondos';
 
 type Props = { params: Promise<{ id: string }> };
@@ -58,7 +58,7 @@ export default async function OperacionesCarteraPage({ params }: Props) {
         </div>
       ) : (
         <Suspense fallback={<p className="text-sm text-gray-400">Cargando tabla...</p>}>
-          <OperacionesTable operaciones={rows} mapItems={mapItems} carteraName={cartera.carteraName} />
+          <OperacionesCarteraTable operaciones={rows} mapItems={mapItems} carteraName={cartera.carteraName} />
         </Suspense>
       )}
     </div>
