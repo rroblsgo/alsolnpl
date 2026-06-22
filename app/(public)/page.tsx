@@ -121,8 +121,8 @@ export default async function HomePage() {
           </h1>
 
           <p className="mt-6 text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed">
-            Centraliza el análisis, seguimiento y gestión de Non-Performing Loans.
-            Desde la ficha del activo hasta el cierre de la operación.
+            Centraliza el análisis, seguimiento y gestión de Non-Performing
+            Loans. Desde la ficha del activo hasta el cierre de la operación.
           </p>
 
           <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -180,8 +180,8 @@ export default async function HomePage() {
               Cómo funciona la plataforma
             </h2>
             <p className="mt-3 text-gray-500 dark:text-gray-400 max-w-xl mx-auto">
-              Un flujo de trabajo estructurado para gestionar cada expediente NPL
-              de principio a fin.
+              Un flujo de trabajo estructurado para gestionar cada expediente
+              NPL de principio a fin.
             </p>
           </div>
 
@@ -251,8 +251,8 @@ export default async function HomePage() {
               </h2>
               <p className="text-gray-500 dark:text-gray-400 leading-relaxed mb-6">
                 Cada funcionalidad responde a las necesidades reales de la
-                operativa diaria: nada falta, nada sobra. Toda la información del
-                expediente en un único lugar.
+                operativa diaria: nada falta, nada sobra. Toda la información
+                del expediente en un único lugar.
               </p>
               {isAuth ? (
                 <Link
@@ -281,7 +281,9 @@ export default async function HomePage() {
                     className="size-5 shrink-0 text-blue-700 dark:text-blue-400 mt-0.5"
                     aria-hidden="true"
                   />
-                  <span className="text-sm text-gray-700 dark:text-gray-300">{h}</span>
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    {h}
+                  </span>
                 </li>
               ))}
             </ul>

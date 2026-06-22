@@ -22,6 +22,20 @@ export const ROLES = {
 
 export type AppRole = (typeof ROLES)[keyof typeof ROLES];
 
+/**
+ * Todos los roles disponibles como array,
+ * útil para selects y validaciones en server actions.
+ */
+export const APP_ROLES: AppRole[] = [
+  ROLES.ADMIN,
+  ROLES.LEGAL,
+  ROLES.COMERCIAL,
+  ROLES.VER_ONLY,
+  ROLES.CLIENTE,
+  ROLES.AGENTE,
+  ROLES.USER,
+];
+
 // ── Grupos de acceso ──────────────────────────────────────────────────────────
 
 /**

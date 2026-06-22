@@ -16,6 +16,7 @@ import {
   UserPlusIcon,
   BriefcaseIcon,
   TableCellsIcon,
+  UsersIcon,
 } from '@heroicons/react/24/outline';
 import { Sparkles } from 'lucide-react';
 
@@ -145,23 +146,42 @@ export default function DashboardNavigation({ role }: Props) {
               </li>
             ))}
             {isAdmin && (
-              <li>
-                <Link
-                  href={'/dashboard/users/create' as Route}
-                  className={classNames(
-                    currentPath('/dashboard/users/create', pathname)
-                      ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300'
-                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-300',
-                    'group flex gap-x-3 rounded-lg p-2 text-sm font-medium transition-colors'
-                  )}
-                >
-                  <UserPlusIcon
-                    aria-hidden="true"
-                    className="size-5 shrink-0 text-gray-400"
-                  />
-                  Crear usuario
-                </Link>
-              </li>
+              <>
+                <li>
+                  <Link
+                    href={'/dashboard/users/create' as Route}
+                    className={classNames(
+                      currentPath('/dashboard/users/create', pathname)
+                        ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300'
+                        : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-300',
+                      'group flex gap-x-3 rounded-lg p-2 text-sm font-medium transition-colors'
+                    )}
+                  >
+                    <UserPlusIcon
+                      aria-hidden="true"
+                      className="size-5 shrink-0 text-gray-400"
+                    />
+                    Crear usuario
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href={'/dashboard/users/roles' as Route}
+                    className={classNames(
+                      currentPath('/dashboard/users/roles', pathname)
+                        ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300'
+                        : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-300',
+                      'group flex gap-x-3 rounded-lg p-2 text-sm font-medium transition-colors'
+                    )}
+                  >
+                    <UsersIcon
+                      aria-hidden="true"
+                      className="size-5 shrink-0 text-gray-400"
+                    />
+                    Gestión de roles
+                  </Link>
+                </li>
+              </>
             )}
           </ul>
           <div className="mt-4 px-2">
