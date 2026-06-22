@@ -10,25 +10,34 @@ import { Form, FormSubmit } from '@/src/shared/components/forms';
 import { editNplAction } from '../actions/npl-actions';
 import NplForm from './NplForm';
 import { SelectNpl } from '../types/npl.types';
+import { ExpedienteNotaListItem } from '@/src/fetatures/expediente_npl/types/expediente.types';
+import { DocumentListItem } from '@/src/fetatures/documents/types/document.types';
 
 type Props = {
   npl: SelectNpl;
   returnTo?: string;
+  expedienteNotas?: ExpedienteNotaListItem[];
+  notaDocsMap?:     Record<number, DocumentListItem[]>;
+  userOptions?:     { id: string; name: string; email: string }[];
 };
 
 const n2s = (v: string | null | undefined) => v ?? '';
 
-export default function EditNpl({ npl, returnTo }: Props) {
+export default function EditNpl({
+  npl,
+  returnTo,
+  expedienteNotas = [],
+  notaDocsMap     = {},
+  userOptions     = [],
+}: Props) {
   const router = useRouter();
   const methods = useForm<NplInput>({
     resolver: zodResolver(NplSchema),
     mode: 'all',
     defaultValues: {
-      // Procedencia
       propertyId:   npl.propertyId   ?? '',
       enrichmentId: npl.enrichmentId ?? null,
       enrichmentOperacionId: npl.enrichmentOperacionId ?? null,
-      // A
       nuestroCodigoNpl: npl.nuestroCodigoNpl ?? '',
       tituloOperacion: npl.tituloOperacion,
       referenciaOrigen: npl.referenciaOrigen ?? '',
@@ -59,7 +68,6 @@ export default function EditNpl({ npl, returnTo }: Props) {
       notasObservaciones: npl.notasObservaciones ?? '',
       imagenAsociada: npl.imagenAsociada ?? '',
       imagenesAdicionales: npl.imagenesAdicionales,
-      // B
       costeAdquisicionCredito: n2s(npl.costeAdquisicionCredito),
       impuestosAjd: n2s(npl.impuestosAjd),
       costesNotariaRegistro: n2s(npl.costesNotariaRegistro),
@@ -70,10 +78,8 @@ export default function EditNpl({ npl, returnTo }: Props) {
       pujaProbable: n2s(npl.pujaProbable),
       fechaCompra: npl.fechaCompra ?? '',
       fechaTerminacion: npl.fechaTerminacion ?? '',
-      gastosDiversos:
-        (npl.gastosDiversos as { titulo: string; valor: number }[]) ?? [],
+      gastosDiversos: (npl.gastosDiversos as { titulo: string; valor: number }[]) ?? [],
       informacionInversor: npl.informacionInversor ?? '',
-      // C
       principal: n2s(npl.principal),
       intereses: n2s(npl.intereses),
       costas: n2s(npl.costas),
@@ -95,7 +101,6 @@ export default function EditNpl({ npl, returnTo }: Props) {
       embargos: npl.embargos ?? '',
       notasInternas: npl.notasInternas ?? '',
       notasOcupacion: npl.notasOcupacion ?? '',
-      // Control
       estado: npl.estado,
       esPublico: npl.esPublico,
     },
@@ -113,7 +118,12 @@ export default function EditNpl({ npl, returnTo }: Props) {
   return (
     <FormProvider {...methods}>
       <Form onSubmit={methods.handleSubmit(onSubmit)}>
-        <NplForm nplId={npl.id} />
+        <NplForm
+          nplId={npl.id}
+          expedienteNotas={expedienteNotas}
+          notaDocsMap={notaDocsMap}
+          userOptions={userOptions}
+        />
         <FormSubmit value="Guardar cambios" className="mt-6 text-white" />
       </Form>
     </FormProvider>

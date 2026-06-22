@@ -13,6 +13,7 @@ import { users } from './auth-schema';
 export const documentEntityTypeEnum = pgEnum('document_entity_type', [
   'NPL',
   'TASK',
+  'EXPEDIENTE_NOTA',
   // Extensible: 'CLIENTE', 'EXPEDIENTE', etc.
 ]);
 

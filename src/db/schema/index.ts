@@ -63,3 +63,19 @@ export type {
   InsertEnrichmentDeudor,
   SelectEnrichmentDeudor,
 } from './enrichment_deudores';
+
+// ─── Feature expediente_npl ───────────────────────────────────────────────────
+export {
+  expedienteNotas,
+  expedienteTipoNotaEnum,
+  expedienteRelevanciaEnum,
+  expedienteStatusEnum,
+} from './expediente_npl';
+export type {
+  InsertExpedienteNota,
+  SelectExpedienteNota,
+  ExpedienteTipoNota,
+  ExpedienteRelevancia,
+  ExpedienteStatus,
+  NotaExpedienteItem,
+} from './expediente_npl';

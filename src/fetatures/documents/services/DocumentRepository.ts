@@ -1,6 +1,7 @@
 import { db } from '@/src/db';
-import { document, users, npl, task } from '@/src/db/schema';
+import { document, users, npl, task, expedienteNotas } from '@/src/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
+import { sql } from 'drizzle-orm';
 import {
   InsertDocument,
   SelectDocument,
@@ -21,6 +22,7 @@ export interface IDocumentRepository {
   ): Promise<SelectDocument | undefined>;
   remove(id: number): Promise<void>;
   listAllWithEntity(): Promise<DocumentDashboardItem[]>;
+  listUploaders(): Promise<Array<{ id: string; name: string }>>;
 }
 
 export type DocumentDashboardItem = DocumentListItem & {
@@ -153,23 +155,60 @@ class DocumentRepository implements IDocumentRepository {
         createdAt: document.createdAt,
         updatedAt: document.updatedAt,
         uploaderName: users.name,
-        nplTitle: npl.tituloOperacion,
-        taskTitle: task.title,
+        nplTitle:       npl.tituloOperacion,
+        taskTitle:      task.title,
+        // Título de la nota del expediente: primer item del array JSONB
+        expedienteNotaTitulo: sql<string | null>`${expedienteNotas.notaItems}->0->>'titulo'`,
+        // nplId del NPL al que pertenece la nota (para construir la URL de edición)
+        expedienteNotaNplId: expedienteNotas.nplId,
       })
       .from(document)
-      .leftJoin(users, eq(document.uploadedBy, users.id))
-      .leftJoin(npl, and(eq(document.entityType, 'NPL'), eq(document.entityId, npl.id)))
-      .leftJoin(task, and(eq(document.entityType, 'TASK'), eq(document.entityId, task.id)))
+      .leftJoin(users,           eq(document.uploadedBy, users.id))
+      .leftJoin(npl,             and(eq(document.entityType, 'NPL'),             eq(document.entityId, npl.id)))
+      .leftJoin(task,            and(eq(document.entityType, 'TASK'),            eq(document.entityId, task.id)))
+      .leftJoin(expedienteNotas, and(eq(document.entityType, 'EXPEDIENTE_NOTA'), eq(document.entityId, expedienteNotas.id)))
       .orderBy(desc(document.createdAt));
 
-    return rows.map((row) => ({
-      ...row,
-      entityTitle: row.nplTitle ?? row.taskTitle ?? null,
-      entityEditUrl:
-        row.entityType === 'NPL'
-          ? `/dashboard/npl/${row.entityId}/edit`
-          : `/dashboard/tasks/${row.entityId}/edit`,
-    }));
+    return rows.map((row) => {
+      let entityTitle: string | null = null;
+      let entityEditUrl = '';
+
+      if (row.entityType === 'NPL') {
+        entityTitle   = row.nplTitle ?? null;
+        entityEditUrl = `/dashboard/npl/${row.entityId}/edit`;
+      } else if (row.entityType === 'TASK') {
+        entityTitle   = row.taskTitle ?? null;
+        entityEditUrl = `/dashboard/tasks/${row.entityId}/edit`;
+      } else if (row.entityType === 'EXPEDIENTE_NOTA') {
+        // Título: "Expediente · <primer titulo del item>"
+        entityTitle   = row.expedienteNotaTitulo
+          ? `Expediente · ${row.expedienteNotaTitulo}`
+          : `Nota expediente #${row.entityId}`;
+        // Enlace al NPL al que pertenece la nota, tab E
+        entityEditUrl = row.expedienteNotaNplId
+          ? `/dashboard/npl/${row.expedienteNotaNplId}/edit`
+          : '';
+      }
+
+      return {
+        ...row,
+        entityTitle,
+        entityEditUrl,
+      };
+    });
+  }
+
+  /**
+   * Devuelve los usuarios que han subido al menos un documento,
+   * ordenados por nombre — para poblar el select de filtro.
+   */
+  async listUploaders(): Promise<Array<{ id: string; name: string }>> {
+    const rows = await db
+      .selectDistinct({ id: users.id, name: users.name })
+      .from(document)
+      .innerJoin(users, eq(document.uploadedBy, users.id))
+      .orderBy(users.name);
+    return rows.map((r) => ({ id: r.id, name: r.name ?? r.id }));
   }
 
   async remove(id: number) {

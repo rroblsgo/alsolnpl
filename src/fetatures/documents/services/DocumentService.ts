@@ -41,6 +41,10 @@ class DocumentService {
     return documentRepository.listAllWithEntity();
   }
 
+  async listUploaders(): Promise<Array<{ id: string; name: string }>> {
+    return documentRepository.listUploaders();
+  }
+
   async deleteDocument(id: number) {
     const doc = await documentRepository.findById(id);
     if (!doc) return;

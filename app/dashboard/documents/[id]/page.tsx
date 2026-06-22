@@ -25,23 +25,30 @@ export default async function DocumentDetailPage({ params }: Props) {
   const doc = await documentRepository.findByIdWithUploader(Number(id));
   if (!doc) notFound();
 
-  // Resolve the parent entity name dynamically
   let entityTitle: string | null = null;
-  let entityEditUrl: string;
+  let entityEditUrl: string      = '/dashboard/documents';
+
   if (doc.entityType === 'NPL') {
-    const { nplService } = await import(
-      '@/src/fetatures/gestion_npl/services/NplService'
-    );
+    const { nplService } = await import('@/src/fetatures/gestion_npl/services/NplService');
     const npl = await nplService.getNpl(doc.entityId).catch(() => null);
-    entityTitle = npl?.tituloOperacion ?? null;
+    entityTitle   = npl?.tituloOperacion ?? null;
     entityEditUrl = `/dashboard/npl/${doc.entityId}/edit`;
-  } else {
-    const { taskService } = await import(
-      '@/src/fetatures/tasks/services/TaskService'
-    );
+
+  } else if (doc.entityType === 'TASK') {
+    const { taskService } = await import('@/src/fetatures/tasks/services/TaskService');
     const task = await taskService.getTask(doc.entityId).catch(() => null);
-    entityTitle = task?.title ?? null;
+    entityTitle   = task?.title ?? null;
     entityEditUrl = `/dashboard/tasks/${doc.entityId}/edit`;
+
+  } else if (doc.entityType === 'EXPEDIENTE_NOTA') {
+    const { expedienteRepository } = await import(
+      '@/src/fetatures/expediente_npl/services/ExpedienteRepository'
+    );
+    const nota = await expedienteRepository.findById(doc.entityId).catch(() => null);
+    // Título: primer item del array JSONB
+    const items = (nota?.notaItems ?? []) as Array<{ titulo?: string }>;
+    entityTitle   = items[0]?.titulo ? `Expediente · ${items[0].titulo}` : `Nota expediente #${doc.entityId}`;
+    entityEditUrl = nota?.nplId ? `/dashboard/npl/${nota.nplId}/edit` : '/dashboard/documents';
   }
 
   return (

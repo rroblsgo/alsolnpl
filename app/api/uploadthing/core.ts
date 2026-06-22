@@ -86,6 +86,20 @@ export const ourFileRouter = {
     .onUploadComplete(async ({ metadata, file }) => {
       return { uploadedBy: metadata.userId, name: file.name, url: file.ufsUrl };
     }),
+
+  // ─── Expediente NPL: documentos adjuntos a notas de expediente ──────────
+  expedienteNotaUploader: f({
+    blob: { maxFileSize: '16MB', maxFileCount: 5 },
+  })
+    .middleware(async ({ req }) => {
+      console.log(req);
+      const { session } = await requireAuth();
+      if (!session) throw new UploadThingError('Unauthorized');
+      return { userId: session.user.id };
+    })
+    .onUploadComplete(async ({ metadata, file }) => {
+      return { uploadedBy: metadata.userId, name: file.name, size: file.size };
+    }),
 } satisfies FileRouter;
 
 export type OurFileRouter = typeof ourFileRouter;

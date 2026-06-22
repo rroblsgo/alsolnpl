@@ -27,6 +27,7 @@ const EXT_COLORS: Record<string, string> = {
 const ENTITY_BADGE: Record<string, string> = {
   NPL: 'bg-indigo-100 text-indigo-700',
   TASK: 'bg-emerald-100 text-emerald-700',
+  EXPEDIENTE_NOTA: 'bg-orange-100 text-orange-700',
 };
 
 function formatFileSize(bytes: number | null | undefined) {
@@ -175,7 +176,7 @@ export default function DocumentDetailCard({ doc, entityTitle, entityEditUrl }: 
             </dt>
             <dd className="mt-1 flex items-center gap-2">
               <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${ENTITY_BADGE[doc.entityType]}`}>
-                {doc.entityType === 'NPL' ? 'NPL' : 'Tarea'}
+                {doc.entityType === 'NPL' ? 'NPL' : doc.entityType === 'EXPEDIENTE_NOTA' ? 'Expediente' : 'Tarea'}
               </span>
               {entityTitle && (
                 <a

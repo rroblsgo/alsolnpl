@@ -8,24 +8,35 @@ import NplFormSectionA from './NplFormSectionA';
 import NplFormSectionB from './NplFormSectionB';
 import NplFormSectionC from './NplFormSectionC';
 import NplFormSectionD from './NplFormSectionD';
+import NplFormSectionE from '@/src/fetatures/expediente_npl/components/NplFormSectionE';
 import { FormLabel } from '@/src/shared/components/forms';
+import { ExpedienteNotaListItem } from '@/src/fetatures/expediente_npl/types/expediente.types';
+import { DocumentListItem } from '@/src/fetatures/documents/types/document.types';
 
 const TABS = [
-  { id: 'A', label: 'A. Datos registrales' },
-  { id: 'B', label: 'B. Rentabilidad' },
-  { id: 'C', label: 'C. Estado procesal' },
-  { id: 'D', label: 'D. Deudores' },
+  { id: 'A',       label: 'A. Datos registrales' },
+  { id: 'B',       label: 'B. Rentabilidad' },
+  { id: 'C',       label: 'C. Estado procesal' },
+  { id: 'D',       label: 'D. Deudores' },
+  { id: 'E',       label: 'E. Expediente' },
   { id: 'control', label: '⚙ Control' },
 ] as const;
 
 type TabId = (typeof TABS)[number]['id'];
 
 type Props = {
-  // Solo presente en edición — permite al tab D mostrar el enlace a gestión
   nplId?: number;
+  expedienteNotas?: ExpedienteNotaListItem[];
+  notaDocsMap?:     Record<number, DocumentListItem[]>;
+  userOptions?:     { id: string; name: string; email: string }[];
 };
 
-export default function NplForm({ nplId }: Props) {
+export default function NplForm({
+  nplId,
+  expedienteNotas = [],
+  notaDocsMap     = {},
+  userOptions     = [],
+}: Props) {
   const [activeTab, setActiveTab] = useState<TabId>('A');
   const { register } = useFormContext<NplInput>();
 
@@ -56,6 +67,24 @@ export default function NplForm({ nplId }: Props) {
         {activeTab === 'B' && <NplFormSectionB />}
         {activeTab === 'C' && <NplFormSectionC />}
         {activeTab === 'D' && <NplFormSectionD nplId={nplId} />}
+        {activeTab === 'E' && (
+          nplId ? (
+            <NplFormSectionE
+              nplId={nplId}
+              initialNotas={expedienteNotas}
+              notaDocsMap={notaDocsMap}
+              userOptions={userOptions}
+            />
+          ) : (
+            <div className="rounded-lg border border-orange-100 bg-orange-50 p-4 text-sm text-orange-800">
+              <p className="font-semibold">Expediente NPL</p>
+              <p className="mt-1 text-orange-700">
+                El expediente estará disponible una vez guardado el NPL.
+                Crea el NPL primero y luego accede aquí para añadir notas.
+              </p>
+            </div>
+          )
+        )}
         {activeTab === 'control' && (
           <div className="space-y-6">
             <h3 className="border-b pb-2 text-base font-semibold text-gray-900">

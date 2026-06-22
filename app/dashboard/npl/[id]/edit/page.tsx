@@ -9,6 +9,7 @@ import EditNpl from '@/src/fetatures/gestion_npl/components/EditNpl';
 import { nplService } from '@/src/fetatures/gestion_npl/services/NplService';
 import DocumentsPanel from '@/src/fetatures/documents/components/DocumentsPanel';
 import { documentService } from '@/src/fetatures/documents/services/DocumentService';
+import { expedienteService } from '@/src/fetatures/expediente_npl/services/ExpedienteService';
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -30,10 +31,23 @@ export default async function EditNplPage({ params, searchParams }: Props) {
   const { id } = await params;
   const { returnTo } = await searchParams;
   const nplId = Number(id);
-  const [npl, documents] = await Promise.all([
+
+  // Carga en paralelo: NPL, documentos del NPL, notas de expediente, usuarios
+  const [npl, documents, expedienteNotas, userOptions] = await Promise.all([
     nplService.getNplForEdit(nplId, session.user),
     documentService.listByEntity('NPL', nplId),
+    expedienteService.listByNpl(nplId),
+    expedienteService.listUserOptions(),
   ]);
+
+  // Documentos de cada nota (en paralelo)
+  const notaDocsEntries = await Promise.all(
+    expedienteNotas.map(async (nota) => {
+      const docs = await documentService.listByEntity('EXPEDIENTE_NOTA', nota.id);
+      return [nota.id, docs] as const;
+    })
+  );
+  const notaDocsMap = Object.fromEntries(notaDocsEntries);
 
   return (
     <>
@@ -45,10 +59,16 @@ export default async function EditNplPage({ params, searchParams }: Props) {
         Volver a NPLs
       </Link>
       <div className="mt-8 rounded-xl bg-white p-8 shadow-lg">
-        <EditNpl npl={npl} returnTo={returnTo} />
+        <EditNpl
+          npl={npl}
+          returnTo={returnTo}
+          expedienteNotas={expedienteNotas}
+          notaDocsMap={notaDocsMap}
+          userOptions={userOptions}
+        />
       </div>
 
-      {/* ── Documentos adjuntos ────────────────────────────────────────────── */}
+      {/* ── Documentos adjuntos al NPL ──────────────────────────────────── */}
       <div className="mt-8 rounded-xl bg-white p-8 shadow-lg">
         <h2 className="mb-1 text-base font-bold text-gray-900">
           Documentos adjuntos

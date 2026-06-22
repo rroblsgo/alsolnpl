@@ -6,6 +6,7 @@ import RichTextContent from '@/src/shared/components/ui/RichTextContent';
 import Image from 'next/image';
 import Link from 'next/link';
 import { DynamicNplLocation } from '@/src/fetatures/gestion_npl/components/DynamicNplLocation';
+import { SolicitudInversionModal } from '@/src/fetatures/solicitud_inversion/components/SolicitudInversionModal';
 
 type Props = { params: Promise<{ id: string }> };
 
@@ -29,15 +30,25 @@ export default async function NplDetailPage({ params }: Props) {
     <main className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8 space-y-8">
         {/* Cabecera */}
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            {npl.tituloOperacion}
-          </h1>
-          {npl.municipio && (
-            <p className="mt-1 text-gray-500">
-              📍 {[npl.municipio, npl.provincia].filter(Boolean).join(', ')}
-            </p>
-          )}
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              {npl.tituloOperacion}
+            </h1>
+            {npl.municipio && (
+              <p className="mt-1 text-gray-500">
+                📍 {[npl.municipio, npl.provincia].filter(Boolean).join(', ')}
+              </p>
+            )}
+          </div>
+
+          {/* Botón de solicitud de inversión */}
+          <div className="flex-shrink-0">
+            <SolicitudInversionModal
+              nplId={npl.id}
+              nplTitulo={npl.tituloOperacion}
+            />
+          </div>
         </div>
 
         {/* Imagen */}
@@ -168,12 +179,19 @@ export default async function NplDetailPage({ params }: Props) {
           </div>
         )}
 
-        <Link
-          href="/npl"
-          className="inline-block text-sm text-gray-500 hover:text-gray-700"
-        >
-          ← Volver a oportunidades
-        </Link>
+        {/* Footer: volver + botón solicitud repetido para comodidad */}
+        <div className="flex items-center justify-between">
+          <Link
+            href="/npl"
+            className="inline-block text-sm text-gray-500 hover:text-gray-700"
+          >
+            ← Volver a oportunidades
+          </Link>
+          <SolicitudInversionModal
+            nplId={npl.id}
+            nplTitulo={npl.tituloOperacion}
+          />
+        </div>
       </div>
     </main>
   );

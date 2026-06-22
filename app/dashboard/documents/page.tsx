@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { redirect } from 'next/navigation';
+import { Suspense } from 'react';
 import { requireAuth } from '@/src/lib/auth-server';
 import Heading from '@/src/shared/components/typography/Heading';
 import { generatePageTitle } from '@/src/shared/utils/metadata';
@@ -14,7 +15,10 @@ export default async function DocumentsPage() {
   const { session } = await requireAuth();
   if (!session) redirect('/auth/login');
 
-  const documents = await documentService.listAllWithEntity();
+  const [documents, uploaders] = await Promise.all([
+    documentService.listAllWithEntity(),
+    documentService.listUploaders(),
+  ]);
 
   return (
     <>
@@ -22,7 +26,9 @@ export default async function DocumentsPage() {
       <p className="mt-2 text-center text-sm text-gray-500">
         Todos los documentos adjuntos a NPLs y tareas
       </p>
-      <DocumentsDashboardList documents={documents} />
+      <Suspense>
+        <DocumentsDashboardList documents={documents} uploaders={uploaders} />
+      </Suspense>
     </>
   );
 }

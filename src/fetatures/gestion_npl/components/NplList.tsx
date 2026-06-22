@@ -91,27 +91,22 @@ export default function NplList({ npls }: Props) {
     const min = costeMin ? parseFloat(costeMin) : null;
     const max = costeMax ? parseFloat(costeMax) : null;
 
-    return npls
-      .filter((n) => {
-        const matchSearch = !q || n.tituloOperacion.toLowerCase().includes(q);
-        const matchProvincia =
-          !filterProvincia || n.provincia === filterProvincia;
-        const matchMunicipio =
-          !filterMunicipio || n.municipio === filterMunicipio;
-        const coste = n.costeAdquisicionCredito
-          ? parseFloat(n.costeAdquisicionCredito)
-          : null;
-        const matchMin = min === null || (coste !== null && coste >= min);
-        const matchMax = max === null || (coste !== null && coste <= max);
-        return (
-          matchSearch &&
-          matchProvincia &&
-          matchMunicipio &&
-          matchMin &&
-          matchMax
-        );
-      })
-      .sort((a, b) => a.tituloOperacion.localeCompare(b.tituloOperacion, 'es'));
+    return npls.filter((n) => {
+      const matchSearch = !q || n.tituloOperacion.toLowerCase().includes(q);
+      const matchProvincia =
+        !filterProvincia || n.provincia === filterProvincia;
+      const matchMunicipio =
+        !filterMunicipio || n.municipio === filterMunicipio;
+      const coste = n.costeAdquisicionCredito
+        ? parseFloat(n.costeAdquisicionCredito)
+        : null;
+      const matchMin = min === null || (coste !== null && coste >= min);
+      const matchMax = max === null || (coste !== null && coste <= max);
+      return (
+        matchSearch && matchProvincia && matchMunicipio && matchMin && matchMax
+      );
+    });
+    // .sort((a, b) => a.tituloOperacion.localeCompare(b.tituloOperacion, 'es'));
   }, [npls, search, filterProvincia, filterMunicipio, costeMin, costeMax]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));

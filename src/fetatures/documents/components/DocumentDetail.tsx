@@ -9,7 +9,6 @@ import {
   X,
   Trash2,
   ExternalLink,
-  ArrowLeft,
   ChevronDown,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -34,24 +33,28 @@ function formatFileSize(bytes: number | null | undefined): string {
 }
 
 const EXT_COLOR: Record<string, string> = {
-  pdf: 'text-red-500',
-  doc: 'text-blue-600',
+  pdf:  'text-red-500',
+  doc:  'text-blue-600',
   docx: 'text-blue-600',
-  xls: 'text-green-600',
+  xls:  'text-green-600',
   xlsx: 'text-green-600',
-  jpg: 'text-amber-500',
+  jpg:  'text-amber-500',
   jpeg: 'text-amber-500',
-  png: 'text-amber-500',
+  png:  'text-amber-500',
 };
 
+// Para EXPEDIENTE_NOTA no podemos construir la URL del NPL desde el entityId
+// (que es el id de la nota, no del NPL), así que enlazamos al listado de documentos.
 const ENTITY_HREF: Record<DocumentEntityType, (id: number) => string> = {
-  NPL: (id) => `/dashboard/npl/${id}`,
-  TASK: (id) => `/dashboard/tasks/${id}/edit`,
+  NPL:             (id) => `/dashboard/npl/${id}/edit`,
+  TASK:            (id) => `/dashboard/tasks/${id}/edit`,
+  EXPEDIENTE_NOTA: (_id) => `/dashboard/documents`,
 };
 
 const ENTITY_LABELS: Record<DocumentEntityType, string> = {
-  NPL: 'NPL',
-  TASK: 'Tarea',
+  NPL:             'NPL',
+  TASK:            'Tarea',
+  EXPEDIENTE_NOTA: 'Nota de expediente',
 };
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -64,13 +67,13 @@ type Props = {
 
 export default function DocumentDetail({ doc }: Props) {
   const router = useRouter();
-  const [editing, setEditing] = useState(false);
-  const [titulo, setTitulo] = useState(doc.titulo);
+  const [editing, setEditing]     = useState(false);
+  const [titulo, setTitulo]       = useState(doc.titulo);
   const [categoria, setCategoria] = useState<DocumentCategory>(doc.categoria);
-  const [notas, setNotas] = useState(doc.notas ?? '');
+  const [notas, setNotas]         = useState(doc.notas ?? '');
   const [isPending, startTransition] = useTransition();
 
-  const ext = doc.extension ?? doc.nombreArchivo?.split('.').pop()?.toLowerCase() ?? '';
+  const ext        = doc.extension ?? doc.nombreArchivo?.split('.').pop()?.toLowerCase() ?? '';
   const entityHref = ENTITY_HREF[doc.entityType](doc.entityId);
 
   const handleSave = () => {
@@ -105,9 +108,7 @@ export default function DocumentDetail({ doc }: Props) {
       {/* ── Encabezado ──────────────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <FileText
-            className={`h-8 w-8 shrink-0 ${EXT_COLOR[ext] ?? 'text-gray-400'}`}
-          />
+          <FileText className={`h-8 w-8 shrink-0 ${EXT_COLOR[ext] ?? 'text-gray-400'}`} />
           <div>
             {editing ? (
               <input
@@ -141,12 +142,7 @@ export default function DocumentDetail({ doc }: Props) {
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setEditing(false);
-                  setTitulo(doc.titulo);
-                  setCategoria(doc.categoria);
-                  setNotas(doc.notas ?? '');
-                }}
+                onClick={() => { setEditing(false); setTitulo(doc.titulo); setCategoria(doc.categoria); setNotas(doc.notas ?? ''); }}
                 className="flex items-center gap-1.5 rounded-md border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50"
               >
                 <X className="h-4 w-4" /> Cancelar
@@ -190,9 +186,7 @@ export default function DocumentDetail({ doc }: Props) {
                 className="w-full appearance-none rounded-md border border-gray-300 px-3 py-2 pr-8 text-sm focus:border-orange-400 focus:outline-none"
               >
                 {DOCUMENT_CATEGORIES.map((c) => (
-                  <option key={c} value={c}>
-                    {DOCUMENT_CATEGORY_LABELS[c]}
-                  </option>
+                  <option key={c} value={c}>{DOCUMENT_CATEGORY_LABELS[c]}</option>
                 ))}
               </select>
               <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -225,10 +219,7 @@ export default function DocumentDetail({ doc }: Props) {
           </p>
           <p className="mt-1 text-sm font-medium text-gray-900">
             {new Date(doc.createdAt).toLocaleDateString('es-ES', {
-              weekday: 'long',
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
+              weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
             })}
           </p>
         </div>
@@ -239,9 +230,7 @@ export default function DocumentDetail({ doc }: Props) {
             <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
               Subido por
             </p>
-            <p className="mt-1 text-sm font-medium text-gray-900">
-              {doc.uploaderName}
-            </p>
+            <p className="mt-1 text-sm font-medium text-gray-900">{doc.uploaderName}</p>
           </div>
         )}
 
@@ -252,9 +241,7 @@ export default function DocumentDetail({ doc }: Props) {
           </p>
           <p className="mt-1 text-sm font-medium text-gray-900">
             {new Date(doc.updatedAt).toLocaleDateString('es-ES', {
-              day: 'numeric',
-              month: 'long',
-              year: 'numeric',
+              day: 'numeric', month: 'long', year: 'numeric',
             })}
           </p>
         </div>
@@ -262,9 +249,7 @@ export default function DocumentDetail({ doc }: Props) {
 
       {/* ── Notas ───────────────────────────────────────────────────────────── */}
       <div className="rounded-xl bg-white p-5 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-          Notas
-        </p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Notas</p>
         {editing ? (
           <textarea
             value={notas}
