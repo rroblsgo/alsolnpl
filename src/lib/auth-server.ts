@@ -1,9 +1,9 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { auth } from './auth';
-import { db } from '../db';
-import { users } from '../db/schema/auth-schema';
-import { eq } from 'drizzle-orm';
+// import { db } from '../db';
+// import { users } from '../db/schema/auth-schema';
+// import { eq } from 'drizzle-orm';
 
 // ── lastLoginAt ───────────────────────────────────────────────────────────────
 
@@ -12,20 +12,14 @@ import { eq } from 'drizzle-orm';
  * Fire-and-forget: no bloquea la respuesta si falla.
  * Se llama desde requireDashboard() y requireNplAccess().
  */
-function updateLastLogin(userId: string) {
-  db.update(users)
-    .set({ lastLoginAt: new Date() })
-    .where(eq(users.id, userId))
-    .execute()
-    .catch(() => {}); // silencioso — no crítico
-}
-import {
-  type AppRole,
-  DASHBOARD_ROLES,
-  NPL_ROLES,
-  canAccessDashboard,
-  canAccessNpl,
-} from './roles';
+// function updateLastLogin(userId: string) {
+//   db.update(users)
+//     .set({ lastLoginAt: new Date() })
+//     .where(eq(users.id, userId))
+//     .execute()
+//     .catch(() => {}); // silencioso — no crítico
+// }
+import { type AppRole, canAccessDashboard, canAccessNpl } from './roles';
 
 // ── Sesión básica ─────────────────────────────────────────────────────────────
 
@@ -72,6 +66,7 @@ export async function requireDashboard() {
   if (!canAccessDashboard(session.user.role)) {
     redirect('/unauthorized');
   }
+  // updateLastLogin(session.user.id); // ← añadir esta línea
 
   return session;
 }
@@ -93,6 +88,7 @@ export async function requireNplAccess() {
   if (!canAccessNpl(session.user.role)) {
     redirect('/unauthorized');
   }
+  // updateLastLogin(session.user.id); // ← añadir esta línea
 
   return session;
 }

@@ -25,7 +25,7 @@ export default async function NotificationsPage() {
 
   return (
     <>
-      <Heading>{title}</Heading>
+      <Heading className="text-center text-amber-500">{title}</Heading>
       <NotificationList
         notifications={notifications}
         userId={session.user.id}

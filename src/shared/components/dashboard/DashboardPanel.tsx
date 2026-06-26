@@ -81,7 +81,10 @@ export default function DashboardPanel() {
           <Bars3Icon aria-hidden="true" className="size-5" />
         </button>
 
-        <div aria-hidden="true" className="h-6 w-px bg-gray-200 dark:bg-gray-700 lg:hidden" />
+        <div
+          aria-hidden="true"
+          className="h-6 w-px bg-gray-200 dark:bg-gray-700 lg:hidden"
+        />
 
         <span className="flex-1 text-sm font-semibold text-gray-900 dark:text-white lg:hidden">
           AlsolNPL
@@ -91,9 +94,7 @@ export default function DashboardPanel() {
           <span className="hidden text-sm text-gray-500 dark:text-gray-400 lg:block">
             {session?.user?.email}
           </span>
-          {session?.user?.id && (
-            <NotificationsPanel userId={session.user.id} />
-          )}
+          {session?.user?.id && <NotificationsPanel userId={session.user.id} />}
           {session && <UserMenu userId={session.user.id} />}
         </div>
       </div>

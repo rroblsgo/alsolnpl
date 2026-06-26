@@ -21,13 +21,13 @@ import {
 import { Sparkles } from 'lucide-react';
 
 const navigation = [
+  // Operaciones: visible para todos los usuarios internos
   { name: 'Panel principal', href: '/dashboard', icon: HomeIcon },
   { name: 'Gestión NPL', href: '/dashboard/npl', icon: BuildingOffice2Icon },
   { name: 'Clientes', href: '/dashboard/clientes', icon: UserGroupIcon },
   { name: 'Tareas', href: '/dashboard/tasks', icon: ClipboardDocumentListIcon },
   { name: 'Documentos', href: '/dashboard/documents', icon: DocumentTextIcon },
   { name: 'Notificaciones', href: '/dashboard/notifications', icon: BellIcon },
-  // Operaciones: visible para todos los usuarios internos
   {
     name: 'Operaciones',
     href: '/dashboard/operaciones',
@@ -40,6 +40,12 @@ const navigation = [
 const adminNavigation = [
   // Fondos: solo admin
   { name: 'Fondos', href: '/dashboard/fondos', icon: BriefcaseIcon },
+  {
+    name: 'Crear usuario',
+    href: '/dashboard/users/create',
+    icon: UserPlusIcon,
+  },
+  { name: 'Gestión de roles', href: '/dashboard/users/roles', icon: UsersIcon },
 ];
 
 const accountNavigation = [
@@ -130,62 +136,19 @@ export default function DashboardNavigation({ role }: Props) {
               <li key={item.name}>
                 <Link
                   href={item.href as Route}
-                  className={classNames(
-                    currentPath(item.href, pathname)
-                      ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300'
-                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-300',
-                    'group flex gap-x-3 rounded-lg p-2 text-sm font-medium transition-colors'
-                  )}
+                  className={linkClass(item.href)}
                 >
                   <item.icon
                     aria-hidden="true"
-                    className="size-5 shrink-0 text-gray-400"
+                    className={iconClass(item.href)}
                   />
                   {item.name}
                 </Link>
               </li>
             ))}
-            {isAdmin && (
-              <>
-                <li>
-                  <Link
-                    href={'/dashboard/users/create' as Route}
-                    className={classNames(
-                      currentPath('/dashboard/users/create', pathname)
-                        ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300'
-                        : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-300',
-                      'group flex gap-x-3 rounded-lg p-2 text-sm font-medium transition-colors'
-                    )}
-                  >
-                    <UserPlusIcon
-                      aria-hidden="true"
-                      className="size-5 shrink-0 text-gray-400"
-                    />
-                    Crear usuario
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    href={'/dashboard/users/roles' as Route}
-                    className={classNames(
-                      currentPath('/dashboard/users/roles', pathname)
-                        ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300'
-                        : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700 dark:text-gray-500 dark:hover:bg-white/5 dark:hover:text-gray-300',
-                      'group flex gap-x-3 rounded-lg p-2 text-sm font-medium transition-colors'
-                    )}
-                  >
-                    <UsersIcon
-                      aria-hidden="true"
-                      className="size-5 shrink-0 text-gray-400"
-                    />
-                    Gestión de roles
-                  </Link>
-                </li>
-              </>
-            )}
           </ul>
           <div className="mt-4 px-2">
-            <p className="text-[11px] text-gray-400 dark:text-gray-600">
+            <p className="text-[11px] text-gray-500 dark:text-gray-600">
               AlsolNPL · Alsol Inmobiliaria
             </p>
           </div>

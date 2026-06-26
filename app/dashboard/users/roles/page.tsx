@@ -2,7 +2,7 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowLeftIcon, UsersIcon } from '@heroicons/react/24/outline';
 import { requireRole } from '@/src/lib/auth-server';
-import { ROLES, ROLE_LABELS, APP_ROLES, type AppRole } from '@/src/lib/roles';
+import { ROLES, APP_ROLES } from '@/src/lib/roles';
 import { generatePageTitle } from '@/src/shared/utils/metadata';
 import { listUsersForRoleManagement } from '@/src/fetatures/auth/services/UserRoleRepository';
 import UserRoleList from '@/src/fetatures/auth/components/UserRoleList';
@@ -37,7 +37,8 @@ export default async function UserRolesPage() {
               Gestión de roles
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {users.length} usuario{users.length !== 1 ? 's' : ''} registrado{users.length !== 1 ? 's' : ''}
+              {users.length} usuario{users.length !== 1 ? 's' : ''} registrado
+              {users.length !== 1 ? 's' : ''}
             </p>
           </div>
         </div>
@@ -54,13 +55,13 @@ export default async function UserRolesPage() {
         <dl className="grid grid-cols-1 gap-y-1.5 sm:grid-cols-2 text-xs">
           {APP_ROLES.map((r) => {
             const desc: Record<string, string> = {
-              admin:     'Acceso total al dashboard + administración',
-              legal:     'Dashboard · NPL y tareas legales',
+              admin: 'Acceso total al dashboard + administración',
+              legal: 'Dashboard · NPL y tareas legales',
               comercial: 'Dashboard · NPL y clientes',
-              ver_only:  'Dashboard · solo lectura',
-              cliente:   'Acceso a activos públicos /npl',
-              agente:    'Acceso a activos públicos /npl',
-              user:      'Sin acceso a zonas protegidas (por defecto)',
+              ver_only: 'Dashboard · solo lectura',
+              cliente: 'Acceso a activos públicos /npl',
+              agente: 'Acceso a activos públicos /npl',
+              user: 'Sin acceso a zonas protegidas (por defecto)',
             };
             return (
               <div key={r} className="flex items-baseline gap-1.5">

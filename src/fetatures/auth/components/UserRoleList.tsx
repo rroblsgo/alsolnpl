@@ -1,21 +1,27 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { CheckCircleIcon, ExclamationCircleIcon } from '@heroicons/react/24/outline';
-import { ROLES, ROLE_LABELS, APP_ROLES, type AppRole } from '@/src/lib/roles';
+import {
+  CheckCircleIcon,
+  ExclamationCircleIcon,
+} from '@heroicons/react/24/outline';
+import { ROLE_LABELS, APP_ROLES, type AppRole } from '@/src/lib/roles';
 import { updateUserRoleAction } from '../actions/update-user-role-action';
 import type { UserRoleItem } from '../services/UserRoleRepository';
 
 // ── Badge de role ─────────────────────────────────────────────────────────────
 
 const ROLE_BADGE: Record<string, string> = {
-  admin:     'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400',
-  legal:     'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400',
+  admin: 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400',
+  legal:
+    'bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-400',
   comercial: 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-400',
-  ver_only:  'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
-  cliente:   'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400',
-  agente:    'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400',
-  user:      'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500',
+  ver_only: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+  cliente:
+    'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400',
+  agente:
+    'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400',
+  user: 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500',
 };
 
 // ── Fila individual ───────────────────────────────────────────────────────────
@@ -23,7 +29,10 @@ const ROLE_BADGE: Record<string, string> = {
 function UserRoleRow({ user }: { user: UserRoleItem }) {
   const [selectedRole, setSelectedRole] = useState<string>(user.role);
   const [isPending, startTransition] = useTransition();
-  const [result, setResult] = useState<{ success: string; error: string } | null>(null);
+  const [result, setResult] = useState<{
+    success: string;
+    error: string;
+  } | null>(null);
 
   const isDirty = selectedRole !== user.role;
 
@@ -45,7 +54,7 @@ function UserRoleRow({ user }: { user: UserRoleItem }) {
   };
 
   return (
-    <div className="flex flex-col gap-2 border-b border-gray-100 dark:border-white/5 px-4 py-3 last:border-0 hover:bg-gray-50/60 dark:hover:bg-white/[0.02] transition-colors">
+    <div className="flex flex-col gap-2 border-b border-gray-100 dark:border-white/5 px-4 py-3 last:border-0 hover:bg-gray-50/60 dark:hover:bg-white/2 transition-colors">
       <div className="flex items-center gap-3 flex-wrap">
         {/* Avatar inicial */}
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-950/40 text-sm font-semibold text-blue-700 dark:text-blue-400">
@@ -55,7 +64,9 @@ function UserRoleRow({ user }: { user: UserRoleItem }) {
         {/* Nombre + email */}
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium text-gray-900 dark:text-white">
-            {user.name ?? <span className="italic text-gray-400">Sin nombre</span>}
+            {user.name ?? (
+              <span className="italic text-gray-400">Sin nombre</span>
+            )}
           </p>
           <p className="truncate text-xs text-gray-400">{user.email}</p>
         </div>
@@ -70,7 +81,9 @@ function UserRoleRow({ user }: { user: UserRoleItem }) {
         {/* Verificación email */}
         <span
           className={`hidden shrink-0 text-xs sm:inline ${user.emailVerified ? 'text-emerald-500' : 'text-amber-500'}`}
-          title={user.emailVerified ? 'Email verificado' : 'Email no verificado'}
+          title={
+            user.emailVerified ? 'Email verificado' : 'Email no verificado'
+          }
         >
           {user.emailVerified ? '✓ verificado' : '⚠ sin verificar'}
         </span>
@@ -80,7 +93,10 @@ function UserRoleRow({ user }: { user: UserRoleItem }) {
       <div className="flex items-center gap-2 pl-11 flex-wrap">
         <select
           value={selectedRole}
-          onChange={(e) => { setSelectedRole(e.target.value); setResult(null); }}
+          onChange={(e) => {
+            setSelectedRole(e.target.value);
+            setResult(null);
+          }}
           disabled={isPending}
           className="rounded-md border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900 px-2.5 py-1.5 text-sm text-gray-700 dark:text-gray-300 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:opacity-50"
         >
@@ -143,7 +159,7 @@ export default function UserRoleList({ users }: Props) {
 
   // Agrupar: primero los sin verificar (pendientes), luego el resto por role
   const unverified = users.filter((u) => !u.emailVerified);
-  const verified   = users.filter((u) =>  u.emailVerified);
+  const verified = users.filter((u) => u.emailVerified);
 
   return (
     <div className="space-y-6">

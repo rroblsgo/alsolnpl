@@ -17,7 +17,7 @@ export default async function ProfilePage() {
 
   return (
     <>
-      <Heading className="text-amber-500 ">{title}</Heading>
+      <Heading className="text-amber-500 text-center">{title}</Heading>
       <ProfileForm user={session.user} />
     </>
   );

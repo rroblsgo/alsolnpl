@@ -28,13 +28,22 @@ export default async function EnrichmentPage({ params }: Props) {
   if (!operacion) notFound();
 
   const estadosPermitidos: string[] = [
-    'seleccionado', 'comercializado', 'ofertado', 'reservado', 'vendido', 'cancelado',
+    'seleccionado',
+    'comercializado',
+    'ofertado',
+    'reservado',
+    'vendido',
+    'cancelado',
   ];
-  const puedeEnriquecer = estadosPermitidos.includes(operacion.statusTratamiento);
-  const enrichment = await enrichmentService.findByOperacionId(operacionId).catch((e) => {
-    console.error('[EnrichmentPage] Error cargando enrichment:', e);
-    return null;
-  });
+  const puedeEnriquecer = estadosPermitidos.includes(
+    operacion.statusTratamiento
+  );
+  const enrichment = await enrichmentService
+    .findByOperacionId(operacionId)
+    .catch((e) => {
+      console.error('[EnrichmentPage] Error cargando enrichment:', e);
+      return null;
+    });
 
   // Cargar deudores si ya existe el enrichment
   const deudores = enrichment
@@ -43,22 +52,24 @@ export default async function EnrichmentPage({ params }: Props) {
 
   // Usuarios para selector de asignado en tareas
   const usersList = await db
-    .select({ id: usersTable.id, name: usersTable.name, email: usersTable.email })
+    .select({
+      id: usersTable.id,
+      name: usersTable.name,
+      email: usersTable.email,
+    })
     .from(usersTable)
     .orderBy(usersTable.name);
 
   // Expediente para pre-rellenar tareas
-  const expediente = operacion.mainKey ?? operacion.expedienteId ?? `OP-${operacionId}`;
+  const expediente =
+    operacion.mainKey ?? operacion.expedienteId ?? `OP-${operacionId}`;
 
   return (
     <>
+      <Heading className="text-emerald-700 text-center">Enrichment</Heading>
       <div className="mb-6 flex items-start justify-between gap-4">
-        <Heading className="text-emerald-700">Enrichment</Heading>
         {puedeEnriquecer && !enrichment && (
-          <InitEnrichmentButton
-            operacionId={operacionId}
-            enrichmentId={null}
-          />
+          <InitEnrichmentButton operacionId={operacionId} enrichmentId={null} />
         )}
       </div>
 
@@ -73,15 +84,15 @@ export default async function EnrichmentPage({ params }: Props) {
           <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 py-12 text-center">
             <p className="text-sm font-medium text-gray-500">
               Esta operación debe estar en estado{' '}
-              <strong className="text-emerald-700">Seleccionado</strong> para iniciar
-              el proceso de enrichment.
+              <strong className="text-emerald-700">Seleccionado</strong> para
+              iniciar el proceso de enrichment.
             </p>
           </div>
         ) : !enrichment ? (
           <div className="rounded-xl border border-dashed border-emerald-200 bg-emerald-50 py-12 text-center">
             <p className="text-sm font-medium text-emerald-700">
-              Pulsa <strong>Iniciar Enrichment</strong> para comenzar a recopilar
-              información sobre esta operación.
+              Pulsa <strong>Iniciar Enrichment</strong> para comenzar a
+              recopilar información sobre esta operación.
             </p>
           </div>
         ) : (

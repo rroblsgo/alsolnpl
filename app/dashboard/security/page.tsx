@@ -18,7 +18,7 @@ export default async function SecurityPage() {
 
   return (
     <>
-      <Heading className="text-amber-500">{title}</Heading>
+      <Heading className="text-amber-500 text-center">{title}</Heading>
       <ChangePasswordForm />
       <ActiveSessionsList />
     </>

@@ -25,7 +25,7 @@ export default async function TasksPage() {
 
   return (
     <>
-      <Heading className="text-center">{title}</Heading>
+      <Heading className="text-center text-blue-700">{title}</Heading>
       <div className="mt-5 flex justify-end">
         <Link
           href="/dashboard/tasks/create"

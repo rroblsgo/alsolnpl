@@ -17,7 +17,8 @@ export const metadata: Metadata = {
 // ── Completitud badge por sección ─────────────────────────────────────────────
 function SeccionBadge({ done, label }: { done: boolean; label: string }) {
   return (
-    <span className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold
+    <span
+      className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold
       ${done ? 'bg-emerald-500 text-white' : 'bg-gray-200 text-gray-400'}`}
       title={label}
     >
@@ -33,7 +34,11 @@ function ProgressBar({ pct }: { pct: number }) {
       <div className="h-1.5 w-20 overflow-hidden rounded-full bg-gray-200">
         <div
           className={`h-full rounded-full transition-all ${
-            pct === 100 ? 'bg-emerald-500' : pct >= 50 ? 'bg-amber-400' : 'bg-gray-300'
+            pct === 100
+              ? 'bg-emerald-500'
+              : pct >= 50
+                ? 'bg-amber-400'
+                : 'bg-gray-300'
           }`}
           style={{ width: `${pct}%` }}
         />
@@ -49,39 +54,46 @@ export default async function EnrichmentsPage() {
   // Join enrichments con operaciones para datos de contexto
   const rows = await db
     .select({
-      id:            operacionEnrichments.id,
-      operacionId:   operacionEnrichments.operacionId,
-      nplId:         operacionEnrichments.nplId,
-      updatedAt:     operacionEnrichments.updatedAt,
-      secciones:     operacionEnrichments.seccionesCompletadas,
+      id: operacionEnrichments.id,
+      operacionId: operacionEnrichments.operacionId,
+      nplId: operacionEnrichments.nplId,
+      updatedAt: operacionEnrichments.updatedAt,
+      secciones: operacionEnrichments.seccionesCompletadas,
       tituloOperacion: operacionEnrichments.tituloOperacion,
       statusPromocion: operacionEnrichments.statusPromocionNpl,
       // Operación origen
-      mainKey:       operaciones.mainKey,
-      expedienteId:  operaciones.expedienteId,
-      municipio:     operaciones.municipio,
-      provincia:     operaciones.provincia,
-      propertyTipo:  operaciones.propertyTipo,
+      mainKey: operaciones.mainKey,
+      expedienteId: operaciones.expedienteId,
+      municipio: operaciones.municipio,
+      provincia: operaciones.provincia,
+      propertyTipo: operaciones.propertyTipo,
       // Datos del enrichment para completitud
       referenciaCatastral: operacionEnrichments.referenciaCatastral,
-      provinciaEnr:        operacionEnrichments.provincia,
-      municipioEnr:        operacionEnrichments.municipio,
-      tipoInmueble:        operacionEnrichments.tipoInmueble,
+      provinciaEnr: operacionEnrichments.provincia,
+      municipioEnr: operacionEnrichments.municipio,
+      tipoInmueble: operacionEnrichments.tipoInmueble,
     })
     .from(operacionEnrichments)
-    .innerJoin(operaciones, eq(operacionEnrichments.operacionId, operaciones.id))
+    .innerJoin(
+      operaciones,
+      eq(operacionEnrichments.operacionId, operaciones.id)
+    )
     .orderBy(operacionEnrichments.updatedAt);
 
-  const SECCIONES = ['A','B','C','D','E','F'] as const;
+  const SECCIONES = ['A', 'B', 'C', 'D', 'E', 'F'] as const;
   const SECCION_LABELS: Record<string, string> = {
-    A: 'Identificadores', B: 'Préstamo', C: 'Inmueble',
-    D: 'Judicial', E: 'Deudores', F: 'Estrategia',
+    A: 'Identificadores',
+    B: 'Préstamo',
+    C: 'Inmueble',
+    D: 'Judicial',
+    E: 'Deudores',
+    F: 'Estrategia',
   };
 
   return (
     <>
-      <div className="mb-6 flex items-center justify-between">
-        <Heading className="text-emerald-700">Enrichments</Heading>
+      <Heading className="text-center text-emerald-700">Enrichments</Heading>
+      <div className="mb-6 text-center">
         <span className="rounded-full bg-gray-100 px-3 py-1 text-sm text-gray-600">
           {rows.length} registro{rows.length !== 1 ? 's' : ''}
         </span>
@@ -90,7 +102,8 @@ export default async function EnrichmentsPage() {
       {rows.length === 0 ? (
         <div className="rounded-xl border-2 border-dashed border-gray-200 py-16 text-center">
           <p className="text-sm text-gray-400">
-            No hay enrichments aún. Selecciona una operación y pulsa "Iniciar Enrichment".
+            No hay enrichments aún. Selecciona una operación y pulsa Iniciar
+            Enrichment.
           </p>
         </div>
       ) : (
@@ -109,10 +122,10 @@ export default async function EnrichmentsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {rows.map(row => {
+              {rows.map((row) => {
                 const secciones = row.secciones as SeccionesCompletadas;
                 const pct = calcularCompletitudTotal({
-                  sellerReference:    undefined, // usa secciones_completadas
+                  sellerReference: undefined, // usa secciones_completadas
                   seccionesCompletadas: secciones,
                 } as any);
                 // Calcular % real desde flags
@@ -127,43 +140,61 @@ export default async function EnrichmentsPage() {
                           {row.tituloOperacion}
                         </p>
                       )}
-                      <p className={`font-mono text-xs text-gray-500 ${row.tituloOperacion ? '' : 'font-medium text-gray-900 text-sm'}`}>
+                      <p
+                        className={`font-mono text-xs text-gray-500 ${row.tituloOperacion ? '' : 'font-medium text-gray-900 text-sm'}`}
+                      >
                         {row.expedienteId ?? `Operación ${row.operacionId}`}
                       </p>
                       {row.mainKey && (
-                        <p className="font-mono text-[10px] text-gray-400">{row.mainKey}</p>
+                        <p className="font-mono text-[10px] text-gray-400">
+                          {row.mainKey}
+                        </p>
                       )}
                       {/* Badge estado — siempre visible en la columna de operación */}
-                      <span className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ${
-                        row.statusPromocion === 'promocionado'
-                          ? 'bg-emerald-100 text-emerald-800 ring-emerald-200'
+                      <span
+                        className={`mt-1.5 inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ${
+                          row.statusPromocion === 'promocionado'
+                            ? 'bg-emerald-100 text-emerald-800 ring-emerald-200'
+                            : row.statusPromocion === 'desestimado'
+                              ? 'bg-red-100 text-red-700 ring-red-200'
+                              : 'bg-blue-100 text-blue-700 ring-blue-200'
+                        }`}
+                      >
+                        {row.statusPromocion === 'promocionado'
+                          ? '✓ Promocionado'
                           : row.statusPromocion === 'desestimado'
-                          ? 'bg-red-100 text-red-700 ring-red-200'
-                          : 'bg-blue-100 text-blue-700 ring-blue-200'
-                      }`}>
-                        {row.statusPromocion === 'promocionado' ? '✓ Promocionado'
-                          : row.statusPromocion === 'desestimado' ? '✗ Desestimado'
-                          : '⏳ En curso'}
+                            ? '✗ Desestimado'
+                            : '⏳ En curso'}
                       </span>
                     </td>
                     <td className="px-4 py-3 text-gray-600">
                       {row.municipioEnr ?? row.municipio ?? '—'}
-                      {(row.provinciaEnr ?? row.provincia) &&
-                        <span className="text-gray-400"> ({row.provinciaEnr ?? row.provincia})</span>}
+                      {(row.provinciaEnr ?? row.provincia) && (
+                        <span className="text-gray-400">
+                          {' '}
+                          ({row.provinciaEnr ?? row.provincia})
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       {(row.tipoInmueble ?? row.propertyTipo) ? (
                         <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-600">
                           {row.tipoInmueble ?? row.propertyTipo}
                         </span>
-                      ) : '—'}
+                      ) : (
+                        '—'
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex gap-1">
-                        {SECCIONES.map(s => (
+                        {SECCIONES.map((s) => (
                           <SeccionBadge
                             key={s}
-                            done={secciones[s.toLowerCase() as keyof SeccionesCompletadas]}
+                            done={
+                              secciones[
+                                s.toLowerCase() as keyof SeccionesCompletadas
+                              ]
+                            }
                             label={s}
                           />
                         ))}
@@ -174,22 +205,28 @@ export default async function EnrichmentsPage() {
                     </td>
                     <td className="px-4 py-3 text-xs text-gray-400">
                       {new Date(row.updatedAt).toLocaleDateString('es-ES', {
-                        day: '2-digit', month: '2-digit', year: '2-digit',
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: '2-digit',
                       })}
                     </td>
                     <td className="px-4 py-3 space-y-1">
                       {/* Badge estado promoción */}
                       {row.statusPromocion && (
-                        <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ${
-                          row.statusPromocion === 'promocionado'
-                            ? 'bg-emerald-100 text-emerald-800 ring-emerald-200'
+                        <span
+                          className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ${
+                            row.statusPromocion === 'promocionado'
+                              ? 'bg-emerald-100 text-emerald-800 ring-emerald-200'
+                              : row.statusPromocion === 'desestimado'
+                                ? 'bg-red-100 text-red-700 ring-red-200'
+                                : 'bg-blue-100 text-blue-700 ring-blue-200'
+                          }`}
+                        >
+                          {row.statusPromocion === 'promocionado'
+                            ? '✓ Promocionado'
                             : row.statusPromocion === 'desestimado'
-                            ? 'bg-red-100 text-red-700 ring-red-200'
-                            : 'bg-blue-100 text-blue-700 ring-blue-200'
-                        }`}>
-                          {row.statusPromocion === 'promocionado' ? '✓ Promocionado'
-                            : row.statusPromocion === 'desestimado' ? '✗ Desestimado'
-                            : '⏳ En curso'}
+                              ? '✗ Desestimado'
+                              : '⏳ En curso'}
                         </span>
                       )}
                       {/* Link al NPL si existe */}
@@ -204,7 +241,9 @@ export default async function EnrichmentsPage() {
                     </td>
                     <td className="sticky right-0 bg-white px-4 py-3 text-right shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.05)]">
                       <Link
-                        href={`/dashboard/operaciones/${row.operacionId}/enrichment` as Route}
+                        href={
+                          `/dashboard/operaciones/${row.operacionId}/enrichment` as Route
+                        }
                         className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5
                                    text-xs font-medium text-emerald-700 transition hover:bg-emerald-100 whitespace-nowrap"
                       >
